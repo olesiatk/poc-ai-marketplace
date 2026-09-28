@@ -1,4 +1,5 @@
 import { environment } from "../../environments/environment";
+import { ACTIVE_DATASET } from "../datasets/active";
 import { localHeuristicSearch, tokenize } from "./search";
 import type { AiMode, MatchesMap, Product, ReviewsMap } from "../models/product.model";
 
@@ -7,18 +8,21 @@ const API_KEY = environment.groqApiKey;
 // "llama-3.1-8b-instant"/"llama-3.3-70b-versatile" have been retired from
 // Groq's catalog — gpt-oss-20b is a currently-available, JSON-mode-capable
 // replacement. Verified live against this project's Groq account.
-const MODEL = environment.groqModel || "openai/gpt-oss-20b";
+export const MODEL = environment.groqModel || "openai/gpt-oss-20b";
 
 export const isGroqConfigured = Boolean(API_KEY);
 
-// The catalog is up to 300 products — sent in full, that's ~40K+ tokens,
-// well past typical free/on-demand Groq rate limits (this project's
-// account: 8K TPM), regardless of model. So instead of sending everything,
+// The catalog is 1000+ products — sent in full, that's hundreds of
+// thousands of tokens, well past typical free/on-demand Groq rate limits
+// (this project's account: 8K TPM), regardless of model. So instead of sending everything,
 // pre-rank with the local heuristic (keyword + synonym expansion) and
 // send only the top candidates — a standard retrieve-then-rerank split:
 // cheap local retrieval narrows the field, the LLM does the expensive
 // semantic judgment only on a pool small enough to fit the budget.
-const MAX_CANDIDATES = 25;
+// Sized so the request stays under the 8K TPM limit with room to spare —
+// Groq counts the prompt PLUS the full max_tokens reservation against it,
+// so prompt (~4.2K tokens at 20 candidates) + max_tokens must stay well under 8K.
+const MAX_CANDIDATES = 20;
 
 /**
  * Picks up to MAX_CANDIDATES products to send to the LLM: local-heuristic
@@ -42,15 +46,29 @@ function selectCandidates(query: string, products: Product[], reviews: ReviewsMa
   return [...ranked, ...filler].slice(0, MAX_CANDIDATES);
 }
 
+// Per-product text budget for what's sent to Groq. Titles, descriptions and
+// reviews in these catalogs run to hundreds or thousands of characters
+// each, so even 20 candidates would blow the token budget if sent whole —
+// these caps keep one entry at roughly 150 tokens.
+const MAX_TITLE_CHARS = 120;
+const MAX_DESCRIPTION_CHARS = 160;
+const MAX_FEATURES = 2;
+const MAX_FEATURE_CHARS = 80;
+const MAX_REVIEWS = 2;
+const MAX_REVIEW_CHARS = 100;
+
+function truncate(text: string, max: number): string {
+  const clean = text.replace(/\s+/g, " ").trim();
+  return clean.length <= max ? clean : `${clean.slice(0, max).replace(/\s+\S*$/, "")}…`;
+}
+
 interface CatalogEntry {
   id: string;
-  name: string;
+  title: string;
   category: string;
-  tags: string[];
-  material: string;
-  room: string;
-  style: string;
-  dimensions: string;
+  brand: string;
+  price: number;
+  features: string[];
   description: string;
   reviews: string[];
 }
@@ -58,34 +76,37 @@ interface CatalogEntry {
 function buildCatalog(products: Product[], reviews: ReviewsMap): CatalogEntry[] {
   return products.map((p) => ({
     id: p.id,
-    name: p.name,
+    title: truncate(p.title, MAX_TITLE_CHARS),
     category: p.category,
-    tags: p.tags,
-    material: p.material,
-    room: p.room,
-    style: p.style,
-    dimensions: p.dimensions,
-    description: p.description,
-    reviews: (reviews[p.id] || []).map((r) => r.text),
+    brand: p.store,
+    price: p.price,
+    features: p.features.slice(0, MAX_FEATURES).map((f) => truncate(f, MAX_FEATURE_CHARS)),
+    description: truncate(p.description, MAX_DESCRIPTION_CHARS),
+    reviews: (reviews[p.id] || [])
+      .slice(0, MAX_REVIEWS)
+      .map((r) => truncate(`${r.title}. ${r.text}`, MAX_REVIEW_CHARS)),
   }));
 }
 
-const SYSTEM_PROMPT = `You are a semantic search engine for a furniture marketplace.
+const { domain, promptExamples } = ACTIVE_DATASET;
+
+const SYSTEM_PROMPT = `You are a semantic search engine for a ${domain}.
 You are given a user's query (typed or transcribed from speech) and a product catalog in JSON format.
 
 Your job: find products that are semantically relevant to the query — not only products that contain its exact words. To do that, expand the query in your head before matching, considering:
-1. Core concepts and their lexical synonyms — e.g. "comfortable" also means "comfy", "cosy", "restful", "ergonomic", "ergo".
-2. Contextual, multi-word phrases that express the same idea in a product's own words — e.g. "comfortable" can also read as "spine support", "soft padding", "pleasant to sit on", "relaxed seating", "body-conforming", "plush cushions".
-3. Related attributes implied by the query, even if unstated — materials, product types, and usage scenarios (e.g. "a reading nook" implies a chair or armchair, soft upholstery, a living room or bedroom setting; "for a home office" implies a desk or an ergonomic chair).
-4. Size: each product has a "dimensions" field formatted "WxDxH cm" (e.g. "150x85x80"). If the query mentions measurements or a size like "280x180x90", match products whose dimensions are close in overall size — not just an exact string match, and regardless of which number is width/depth/height. A product listed as "90x180x280" is just as good a match as "280x180x90".
+1. Core concepts and their lexical synonyms — e.g. ${promptExamples.synonyms}.
+2. Contextual, multi-word phrases that express the same idea in a product's own words — e.g. ${promptExamples.phrases}.
+3. Related attributes implied by the query, even if unstated — product types, ingredients, usage scenarios and who it's for (e.g. ${promptExamples.implied}).
+4. Price: each product has a "price" in USD. If the query mentions a budget ("under $20", "cheap"), prefer products that fit it.
 
-Analyze the product's name, category, attributes (material, room, style, dimensions), description, AND customer reviews — the query's intent may match not only the listed attributes but also what customers wrote in their reviews (e.g. a reviewer calling a chair "cosy" or praising its back support).
+Analyze the product's title, category, brand, features, description, AND customer reviews — the query's intent may match not only the listed attributes but also what customers wrote in their reviews.
 
 Return ONLY valid JSON (no explanations, no markdown) in this exact shape:
 {"matches": [{"id": "<product id>", "score": <0-100 relevance>, "keywords": ["<word-or-phrase-1>", "<word-or-phrase-2>"]}]}
 Rules:
-- "keywords" must be words or short phrases that appear VERBATIM in that product's name, description, attributes (including "dimensions" when size is why it matched), or reviews, and that justify why it's relevant — including synonyms and contextual phrases you matched, not only the user's literal query words. 2-6 keywords per product.
-- Only include genuinely relevant products (not all 30), sorted by descending score.
+- "keywords" must be words or short phrases that appear VERBATIM in that product's title, features, description, or reviews, and that justify why it's relevant — including synonyms and contextual phrases you matched, not only the user's literal query words. 2-6 keywords per product.
+- Only include genuinely relevant products (not the whole catalog), sorted by descending score.
+- If no product satisfies every part of the query, still return the closest matches with lower scores (e.g. 30-60) rather than an empty list — but never a product that directly contradicts the query (e.g. a scented product for "without fragrance").
 - If nothing is relevant, return {"matches": []}.
 - Never invent products or ids that aren't in the catalog.`;
 
@@ -102,7 +123,7 @@ export interface AiSearchResult {
 }
 
 /**
- * Runs AI-powered relevance search via Groq (Llama 3.1). Falls back to a
+ * Runs AI-powered relevance search via Groq. Falls back to a
  * local client-side keyword heuristic if no API key is configured or the
  * request fails for any reason, so the UI always stays functional.
  */
@@ -123,10 +144,15 @@ export async function aiSearch(query: string, products: Product[], reviews: Revi
       body: JSON.stringify({
         model: MODEL,
         temperature: 0.2,
-        // gpt-oss-20b spends a substantial, catalog-size-dependent chunk of
-        // this on internal reasoning before the final JSON — 2000 was tuned
-        // for the old non-reasoning llama model and isn't enough here.
-        max_tokens: 4000,
+        // Room for gpt-oss's reasoning plus the JSON answer. At low reasoning
+        // effort (below) answers run ~150–250 tokens; the headroom is for the
+        // occasional longer one.
+        max_tokens: 2000,
+        // gpt-oss models reason before answering; at the default effort that
+        // reasoning sometimes eats the whole budget and Groq rejects the
+        // cut-off answer ("json_validate_failed"). Ranking 20 candidates
+        // doesn't need deep reasoning. Other models don't accept the param.
+        ...(MODEL.startsWith("openai/gpt-oss") ? { reasoning_effort: "low" } : {}),
         response_format: { type: "json_object" },
         messages: [
           { role: "system", content: SYSTEM_PROMPT },

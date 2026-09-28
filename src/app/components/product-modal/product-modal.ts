@@ -9,14 +9,19 @@ import {
   inject,
   input,
   output,
+  signal,
 } from "@angular/core";
-import { IconComponent, type IconName } from "../icon/icon";
+import { IconComponent } from "../icon/icon";
 import { highlightHtml } from "../../lib/search";
-import { formatPrice } from "../../lib/format";
+import { formatDate, formatPrice, formatRating } from "../../lib/format";
 import { listenToHost, sendModal, sendScrollIntoView } from "../../lib/post-message";
 import type { MatchInfo, Product, Review, ReviewsMap } from "../../models/product.model";
 
-const KNOWN_ICONS = new Set<IconName>(["sofa", "table", "chair", "storage", "bed", "decor"]);
+// Raw marketplace bookkeeping that means nothing to a shopper.
+const HIDDEN_DETAIL_KEYS = new Set([
+  "UPC", "Item model number", "Is Discontinued By Manufacturer", "Best Sellers Rank", "Date First Available", "ASIN",
+]);
+const MAX_DETAILS = 8;
 
 // Enough viewport for the modal to render comfortably when a host has
 // sized the <iframe> to fit shorter content behind it.
@@ -35,11 +40,22 @@ export class ProductModalComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly close = output<void>();
 
   protected readonly formatPrice = formatPrice;
+  protected readonly formatRating = formatRating;
+  protected readonly formatDate = formatDate;
 
-  protected readonly iconName = computed<IconName>(() => {
-    const icon = this.product().icon;
-    return KNOWN_ICONS.has(icon as IconName) ? (icon as IconName) : "decor";
+  /** Index into product().images of the photo shown large; reset per modal since a new product mounts a new modal. */
+  protected readonly activeImage = signal(0);
+  protected readonly mainImageUrl = computed(() => {
+    const img = this.product().images[this.activeImage()];
+    return img ? (img.hiRes ?? img.large) : null;
   });
+
+  /** Only plain string details (the raw data occasionally nests objects), minus internal bookkeeping keys. */
+  protected readonly detailEntries = computed(() =>
+    Object.entries(this.product().details)
+      .filter((entry): entry is [string, string] => typeof entry[1] === "string" && !HIDDEN_DETAIL_KEYS.has(entry[0]))
+      .slice(0, MAX_DETAILS)
+  );
 
   protected readonly reviewList = computed<Review[]>(() => this.reviews()[this.product().id] || []);
 
@@ -93,6 +109,6 @@ export class ProductModalComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   protected starsArray(count: number): number[] {
-    return Array.from({ length: count });
+    return Array.from({ length: Math.round(count) });
   }
 }

@@ -1,0 +1,37 @@
+<button
+  type="button"
+  (click)="select.emit(product().id)"
+  (mouseenter)="hoverChange.emit(product().id)"
+  (mouseleave)="hoverChange.emit(null)"
+  (focus)="hoverChange.emit(product().id)"
+  (blur)="hoverChange.emit(null)"
+  [class.is-paired]="paired()"
+  [class.is-ai-only]="rankBadge()?.tone === 'new'"
+  [class.is-ai-tint]="aiTint()"
+  class="bg-surface w-full flex items-center gap-2.5 pl-2 pr-2.5 py-1.5 text-left cursor-pointer hover:bg-neutral-200 transition-colors"
+>
+  @if (rank(); as r) {
+    <span class="rank-number shrink-0">{{ r }}</span>
+  }
+  <span class="shrink-0 w-11 h-11 bg-white flex items-center justify-center">
+    @if (imageUrl() && !imageFailed()) {
+      <img [src]="imageUrl()" alt="" loading="lazy" (error)="imageFailed.set(true)" class="max-h-full max-w-full object-contain" />
+    }
+  </span>
+  <span class="flex-1 min-w-0">
+    <span class="text-[11px] font-extrabold leading-snug line-clamp-2">{{ product().title }}</span>
+    @if (reason(); as why) {
+      <span class="block text-[10px] text-brand-dark font-semibold truncate" [title]="why">{{ why }}</span>
+    } @else {
+      <span class="flex items-center gap-2 text-[10px] text-body">
+        <span class="font-extrabold text-ink">{{ formatPrice(product().price) }}</span>
+        <span class="flex items-center gap-0.5">
+          <app-icon name="star" [size]="10" class="text-brand-dark" />{{ formatRating(product().averageRating) }}
+        </span>
+      </span>
+    }
+  </span>
+  @if (rankBadge(); as badge) {
+    <span class="rank-badge rank-badge--{{ badge.tone }} shrink-0" [title]="badge.title">{{ badge.text }}</span>
+  }
+</button>

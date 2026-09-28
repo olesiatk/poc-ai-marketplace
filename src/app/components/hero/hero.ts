@@ -1,7 +1,10 @@
 import { Component, OnDestroy, computed, model, input, output, signal } from "@angular/core";
 import { IconComponent } from "../icon/icon";
+import { ACTIVE_DATASET } from "../../datasets/active";
 import { VoiceInput } from "../../lib/voice-input";
 import { getSuggestions, type SearchVocabulary, type Suggestion } from "../../lib/suggestions";
+import type { PresetQuery } from "../../datasets/dataset.model";
+import { normalizeQuery } from "../../lib/ai-results";
 import type { AiMode } from "../../models/product.model";
 
 @Component({
@@ -16,10 +19,16 @@ export class HeroComponent implements OnDestroy {
   readonly statusMessage = input("");
   readonly aiMode = input<AiMode>(null);
   readonly vocabulary = input.required<SearchVocabulary>();
+  readonly presets = input<readonly PresetQuery[]>([]);
+  /** The query currently shown, so its preset chip can be marked active. */
+  readonly activeQuery = input("");
 
   readonly submitQuery = output<string>();
   readonly howItWorks = output<void>();
+  readonly pickPreset = output<string>();
+  readonly clearQuery = output<void>();
 
+  protected readonly placeholder = ACTIVE_DATASET.searchPlaceholder;
   protected readonly voiceError = signal<string | null>(null);
   protected readonly showSuggestions = signal(false);
   protected readonly emptyQueryError = signal(false);
@@ -53,6 +62,16 @@ export class HeroComponent implements OnDestroy {
     if (mode === "local") return "Local AI mode";
     return null;
   });
+
+  protected onClear(): void {
+    this.value.set("");
+    this.showSuggestions.set(false);
+    this.clearQuery.emit();
+  }
+
+  protected isActivePreset(preset: PresetQuery): boolean {
+    return normalizeQuery(preset.query) === normalizeQuery(this.activeQuery());
+  }
 
   ngOnDestroy(): void {
     this.voice.destroy();

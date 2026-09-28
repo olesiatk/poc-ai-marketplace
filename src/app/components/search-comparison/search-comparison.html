@@ -1,0 +1,73 @@
+<section class="mx-auto max-w-7xl px-4 sm:px-8 pt-2 pb-10" data-tour="comparison">
+  @if (!layout().sideBySide) {
+    <div class="flex items-center justify-between gap-2 mb-2.5">
+      <div class="inline-flex border border-ink" role="tablist" aria-label="Search results">
+        <button
+          type="button"
+          role="tab"
+          [attr.aria-selected]="activeSide() === 'keyword'"
+          (click)="activeSide.set('keyword')"
+          class="px-3 h-8 text-[11px] font-bold uppercase tracking-wide transition-colors"
+          [class]="activeSide() === 'keyword' ? 'bg-ink text-white' : 'bg-white text-ink'"
+        >
+          Keyword ({{ keywordProducts().length }})
+        </button>
+        <button
+          type="button"
+          role="tab"
+          [attr.aria-selected]="activeSide() === 'ai'"
+          (click)="activeSide.set('ai')"
+          class="px-3 h-8 text-[11px] font-bold uppercase tracking-wide transition-colors"
+          [class]="activeSide() === 'ai' ? 'bg-gradient-brand text-white' : 'bg-white text-ink'"
+        >
+          AI ({{ aiLoading() ? "…" : aiProducts().length }})
+        </button>
+      </div>
+      <button type="button" (click)="clearQuery.emit()" class="text-[11px] font-bold uppercase tracking-wide text-body hover:text-ink">
+        ✕ Clear
+      </button>
+    </div>
+  }
+
+  <div class="relative grid gap-x-8 gap-y-4" [class.grid-cols-2]="layout().sideBySide">
+    @if (layout().sideBySide) {
+      <div class="vs-divider" aria-hidden="true"><span>VS</span></div>
+    }
+    @if (layout().sideBySide || activeSide() === "keyword") {
+      <app-result-column
+        side="keyword"
+        heading="Keyword search"
+        subheading="Exact words and their forms — what most store searches do"
+        [products]="keywordProducts()"
+        [matches]="keywordMatches()"
+        [layout]="layout().layout"
+        [cardsPerRow]="layout().cardsPerRow"
+        [pageSize]="layout().pageSize"
+        [hoveredId]="hoveredId()"
+        [emptyText]="keywordEmpty()"
+        (select)="select.emit({ id: $event, side: 'keyword' })"
+        (hoverChange)="hoveredId.set($event)"
+      />
+    }
+    @if (layout().sideBySide || activeSide() === "ai") {
+      <app-result-column
+        side="ai"
+        heading="AI search"
+        subheading="Understands meaning, not just words"
+        [products]="aiProducts()"
+        [matches]="aiMatches()"
+        [rankChanges]="rankChanges()"
+        [layout]="layout().layout"
+        [cardsPerRow]="layout().cardsPerRow"
+        [pageSize]="layout().pageSize"
+        [hoveredId]="hoveredId()"
+        [loading]="aiLoading()"
+        [note]="aiNote()"
+        emptyText="AI found nothing relevant for this query."
+        tourTarget="first-ai-result"
+        (select)="select.emit({ id: $event, side: 'ai' })"
+        (hoverChange)="hoveredId.set($event)"
+      />
+    }
+  </div>
+</section>

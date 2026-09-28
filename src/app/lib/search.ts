@@ -1,12 +1,7 @@
-import { CONCEPT_GROUPS, expandConcepts } from "./synonyms";
+import { ACTIVE_DATASET } from "../datasets/active";
+import { stem } from "./stem";
+import { expandConcepts, type ConceptGroups } from "./synonyms";
 import type { MatchesMap, Product, ReviewsMap } from "../models/product.model";
-
-// Words that also belong to a synonym/concept family (e.g. "storage",
-// "office", "kitchen" are both a furniture type *and* a concept-group
-// member) are excluded from the type-word gate below — they should keep
-// matching anywhere via their synonyms, same as any other concept word,
-// rather than being pinned to a literal name/category/tags hit.
-const CONCEPT_WORDS = new Set(CONCEPT_GROUPS.flat());
 
 const STOPWORDS = new Set([
   "i", "you", "he", "she", "it", "we", "they", "me", "him", "her", "us", "them",
@@ -23,16 +18,12 @@ export function tokenize(text: string): string[] {
   );
 }
 
-function reviewsBlob(reviews: ReviewsMap, id: string): string {
-  return (reviews[id] || []).map((r) => r.text).join(" ").toLowerCase();
-}
-
 export interface ExpandedQuery {
   /** Literal tokens extracted from the query itself. */
   tokens: string[];
   /**
    * Synonyms and contextual phrases pulled in via concept expansion (e.g.
-   * "cosy" → "comfortable", "plush cushions") that aren't already literal
+   * "hydrating" → "moisturizing", "dry skin") that aren't already literal
    * query tokens.
    */
   expansions: string[];
@@ -40,187 +31,166 @@ export interface ExpandedQuery {
 
 /**
  * Expands a raw query into its literal tokens plus any related synonyms and
- * contextual phrases from the furniture concept dictionary, so matching
- * isn't limited to exact lexical strings.
+ * contextual phrases from the catalog's concept groups, so matching isn't
+ * limited to exact lexical strings.
  */
-export function expandQueryTerms(query: string): ExpandedQuery {
+export function expandQueryTerms(query: string, groups: ConceptGroups = ACTIVE_DATASET.conceptGroups): ExpandedQuery {
   const tokens = tokenize(query);
-  const expansions = expandConcepts(new Set(tokens), query.toLowerCase());
+  const expansions = expandConcepts(new Set(tokens), query.toLowerCase(), groups);
   return { tokens, expansions: [...expansions] };
 }
 
 interface FieldWeights {
-  tags: number;
-  name: number;
+  title: number;
+  features: number;
   category: number;
-  attr: number;
+  brand: number;
   desc: number;
   review: number;
 }
 
 // Full weight for a term the user actually typed.
-const DIRECT_WEIGHTS: FieldWeights = { tags: 4, name: 3, category: 2, attr: 2, desc: 1, review: 1 };
+const DIRECT_WEIGHTS: FieldWeights = { title: 3, features: 2, category: 2, brand: 2, desc: 1, review: 1 };
 // Reduced weight for a term pulled in via synonym/phrase expansion, so
 // exact matches still rank above inferred ones.
-const SYNONYM_WEIGHTS: FieldWeights = { tags: 2, name: 2, category: 1, attr: 1, desc: 1, review: 1 };
+const SYNONYM_WEIGHTS: FieldWeights = { title: 2, features: 1, category: 1, brand: 1, desc: 1, review: 1 };
 
-type Dimensions = readonly [number, number, number];
+const FIELDS = Object.keys(DIRECT_WEIGHTS) as (keyof FieldWeights)[];
 
-const DIMENSION_PATTERN = /(\d{1,5}(?:\.\d{1,2})?)\s*[x×]\s*(\d{1,5}(?:\.\d{1,2})?)\s*[x×]\s*(\d{1,5}(?:\.\d{1,2})?)/i;
-
-/** Extracts a W×D×H triple from text like "150x85x80 cm" or a query like "280x180x90". */
-export function parseDimensions(text: string): Dimensions | null {
-  const match = DIMENSION_PATTERN.exec(text);
-  if (!match) return null;
-  return [Number(match[1]), Number(match[2]), Number(match[3])];
+interface FieldIndex {
+  /** Stems of every word in the field, for single-word lookups. */
+  stems: Set<string>;
+  /** The field's stems joined as " a b c ", for multi-word phrase lookups on word boundaries. */
+  sequence: string;
 }
 
-/**
- * How far apart two W×D×H triples are, as the WORST-axis relative
- * difference (0 = identical on every axis, 1 = some axis is off by 100%).
- * Triples are sorted before comparing so axis order doesn't matter — a
- * user searching "280x180x90" should also find a product listed as
- * "90x180x280".
- *
- * Deliberately the max, not the average: two axes matching almost exactly
- * can otherwise mask a third that's way off (e.g. 90≈88 and 180≈179 but
- * 280 vs 210 — a 70cm/25% gap) and still average out to "close enough".
- */
-function dimensionDistance(a: Dimensions, b: Dimensions): number {
-  const sortedA = [...a].sort((x, y) => x - y);
-  const sortedB = [...b].sort((x, y) => x - y);
-  let maxRelativeDiff = 0;
-  for (let i = 0; i < 3; i++) {
-    const scale = Math.max(sortedA[i], sortedB[i], 1);
-    maxRelativeDiff = Math.max(maxRelativeDiff, Math.abs(sortedA[i] - sortedB[i]) / scale);
+interface ProductIndex {
+  fields: Record<keyof FieldWeights, FieldIndex>;
+  /** Stem → the actual word forms it came from in this product's text, so a hit can be highlighted as written. */
+  surfaces: Map<string, Set<string>>;
+}
+
+// Built once per product rather than on every search — the catalog is static after load.
+const indexCache = new WeakMap<Product, ProductIndex>();
+
+function words(text: string): string[] {
+  return text.toLowerCase().match(/[\p{L}\p{N}]+/gu) ?? [];
+}
+
+function productIndex(product: Product, reviews: ReviewsMap): ProductIndex {
+  let index = indexCache.get(product);
+  if (index) return index;
+
+  const text: Record<keyof FieldWeights, string> = {
+    title: product.title,
+    features: product.features.join(" "),
+    category: product.category,
+    brand: product.store,
+    desc: product.description,
+    review: (reviews[product.id] || []).map((r) => `${r.title} ${r.text}`).join(" "),
+  };
+  const surfaces = new Map<string, Set<string>>();
+  const fields = {} as ProductIndex["fields"];
+  for (const field of FIELDS) {
+    const stems = words(text[field]).map((word) => {
+      const s = stem(word);
+      if (!surfaces.has(s)) surfaces.set(s, new Set());
+      surfaces.get(s)!.add(word);
+      return s;
+    });
+    fields[field] = { stems: new Set(stems), sequence: ` ${stems.join(" ")} ` };
   }
-  return maxRelativeDiff;
+  index = { fields, surfaces };
+  indexCache.set(product, index);
+  return index;
 }
 
-// Products where every axis is within this relative size difference count as a dimension match.
-const DIMENSION_MATCH_THRESHOLD = 0.2;
-// Score for an exact size match, tapering to 0 at the threshold — comparable to a strong tag hit.
-const DIMENSION_MAX_SCORE = 5;
-
-function escapeRegExp(str: string): string {
-  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+interface TermMatcher {
+  term: string;
+  weights: FieldWeights;
+  isSynonym: boolean;
+  /** Set for single words; phrases (spaces/hyphens) are matched against the stem sequence instead. */
+  stem: string | null;
+  phrase: string | null;
 }
 
-/**
- * Whole-word/phrase containment check — unlike a raw substring test, this
- * won't count "table" as a hit inside "comfortable". Uses the same
- * Unicode-aware word-boundary rule as {@link highlightHtml}, so anything
- * that scores a hit here is guaranteed to actually be highlightable.
- */
-function containsTerm(blob: string, term: string): boolean {
-  const re = new RegExp(`(?<![\\p{L}\\p{N}])${escapeRegExp(term)}(?![\\p{L}\\p{N}])`, "u");
-  return re.test(blob);
+function termMatcher(term: string, weights: FieldWeights, isSynonym: boolean): TermMatcher {
+  const parts = words(term).map(stem);
+  return parts.length === 1
+    ? { term, weights, isSynonym, stem: parts[0], phrase: null }
+    : { term, weights, isSynonym, stem: null, phrase: ` ${parts.join(" ")} ` };
 }
 
-/**
- * Words that identify a specific furniture *type* — collected from every
- * product's category and primary tag (`tags[0]`, always the type name for
- * generated products, e.g. "office chair" → "office"/"chair"), so it's
- * derived from the live catalog rather than a hardcoded list.
- */
-function buildTypeVocabulary(products: Product[]): Set<string> {
-  const vocab = new Set<string>();
-  products.forEach((p) => {
-    tokenize(p.category).forEach((w) => vocab.add(w));
-    if (p.tags[0]) tokenize(p.tags[0]).forEach((w) => vocab.add(w));
-  });
-  return vocab;
+function fieldHit(field: FieldIndex, matcher: TermMatcher): boolean {
+  return matcher.stem !== null ? field.stems.has(matcher.stem) : field.sequence.includes(matcher.phrase!);
 }
 
 /**
- * Client-side relevance heuristic — used when no Groq API key is
- * configured, or as a fallback if the Groq request fails. Combines exact
- * keyword matching (sparse/BM25-style field weighting) with synonym and
- * contextual-phrase expansion for a lightweight semantic-ish recall boost,
- * without requiring a vector index.
+ * The word forms to highlight for a hit: for a single word, every form of
+ * it that actually occurs in the product ("frizz", "frizzy" for a "frizzy"
+ * query); for a phrase, the phrase as written plus its hyphen/space twin
+ * ("anti-frizz" ↔ "anti frizz").
  */
-export function localHeuristicSearch(query: string, products: Product[], reviews: ReviewsMap): MatchesMap {
-  const { tokens, expansions } = expandQueryTerms(query);
-  const queryDimensions = parseDimensions(query);
+function highlightForms(matcher: TermMatcher, index: ProductIndex): string[] {
+  if (matcher.stem !== null) return [...(index.surfaces.get(matcher.stem) ?? [matcher.term])];
+  return [...new Set([matcher.term, matcher.term.replace(/-/g, " "), matcher.term.replace(/ /g, "-")])];
+}
+
+/**
+ * Client-side relevance search. Matching is on word stems, so word forms
+ * of the same word match each other ("frizzy"/"frizz") — like any standard
+ * full-text engine. With `groups` (the catalog's concept groups) it also
+ * expands the query with synonyms and contextual phrases for a lightweight
+ * semantic-ish recall boost; with no groups (`[]`) it's plain keyword
+ * search — the "without AI" side of the search comparison. Also used to
+ * pre-select the candidates sent to Groq, and as its fallback.
+ */
+export function localHeuristicSearch(
+  query: string,
+  products: Product[],
+  reviews: ReviewsMap,
+  groups: ConceptGroups = ACTIVE_DATASET.conceptGroups
+): MatchesMap {
+  const { tokens, expansions } = expandQueryTerms(query, groups);
   const matches: MatchesMap = new Map();
-  if (!tokens.length && !queryDimensions) return matches;
+  if (!tokens.length) return matches;
 
   const matchers = [
-    ...tokens.map((term) => ({ term, weights: DIRECT_WEIGHTS, isSynonym: false })),
-    ...expansions.map((term) => ({ term, weights: SYNONYM_WEIGHTS, isSynonym: true })),
+    ...tokens.map((term) => termMatcher(term, DIRECT_WEIGHTS, false)),
+    ...expansions.map((term) => termMatcher(term, SYNONYM_WEIGHTS, true)),
   ];
+  // A synonym that stems to the same thing as a literal query word adds nothing new.
+  const directStems = new Set(matchers.filter((m) => !m.isSynonym).map((m) => m.stem));
+  const effective = matchers.filter((m) => !m.isSynonym || m.stem === null || !directStems.has(m.stem));
 
-  // A type word (e.g. "chair") in the query is a strong signal the user
-  // wants that kind of furniture specifically — without this, a broad,
-  // widely-matching term like "cozy" (a big synonym family that shows up
-  // across every category) is enough on its own to pull in completely
-  // unrelated products ("cozy" tables, wardrobes...) that never actually
-  // match "chair" anywhere. Every product must contain at least one of the
-  // query's type words somewhere in its own name/category/tags — plain
-  // non-type terms (materials, moods, rooms...) are unaffected and keep
-  // matching anywhere, same as before.
-  const typeVocabulary = buildTypeVocabulary(products);
-  const queryTypeWords = tokens.filter((t) => typeVocabulary.has(t) && !CONCEPT_WORDS.has(t));
-
-  products.forEach((product) => {
-    const nameBlob = product.name.toLowerCase();
-    const categoryBlob = product.category.toLowerCase();
-    const tagsBlob = product.tags.join(" ").toLowerCase();
-
-    if (queryTypeWords.length > 0) {
-      const identityBlob = `${nameBlob} ${categoryBlob} ${tagsBlob}`;
-      // Primary tag checked with plain substring too (not just word-boundary)
-      // so a single-word compound like "armchair" still counts as containing
-      // "chair" — containsTerm alone would miss it (no boundary between "arm"
-      // and "chair"), same reason it correctly misses "table" in "comfortable".
-      const primaryType = (product.tags[0] ?? "").toLowerCase();
-      const typeMatched = queryTypeWords.some(
-        (w) => containsTerm(identityBlob, w) || primaryType.includes(w)
-      );
-      if (!typeMatched) return;
-    }
-
-    const attrBlob = `${product.material} ${product.room} ${product.style} ${product.dimensions}`.toLowerCase();
-    const descBlob = product.description.toLowerCase();
-    const revBlob = reviewsBlob(reviews, product.id);
-
+  for (const product of products) {
+    const index = productIndex(product, reviews);
     let score = 0;
     const directTerms = new Set<string>();
     const synonymTerms = new Set<string>();
 
-    matchers.forEach(({ term, weights, isSynonym }) => {
+    for (const matcher of effective) {
       let hit = false;
-      if (containsTerm(tagsBlob, term)) { score += weights.tags; hit = true; }
-      if (containsTerm(nameBlob, term)) { score += weights.name; hit = true; }
-      if (containsTerm(categoryBlob, term)) { score += weights.category; hit = true; }
-      if (containsTerm(attrBlob, term)) { score += weights.attr; hit = true; }
-      if (containsTerm(descBlob, term)) { score += weights.desc; hit = true; }
-      if (containsTerm(revBlob, term)) { score += weights.review; hit = true; }
-      if (hit) (isSynonym ? synonymTerms : directTerms).add(term);
-    });
-
-    if (queryDimensions) {
-      const productDimensions = parseDimensions(product.dimensions);
-      if (productDimensions) {
-        const distance = dimensionDistance(queryDimensions, productDimensions);
-        if (distance < DIMENSION_MATCH_THRESHOLD) {
-          score += DIMENSION_MAX_SCORE * (1 - distance / DIMENSION_MATCH_THRESHOLD);
-          // Adding the product's own dimensions string verbatim lets the
-          // existing highlighter pick it up automatically once the
-          // Dimensions row is rendered through it. A truly identical size
-          // (after sorting axes) is an exact match — yellow — same as any
-          // other literal query hit; merely within tolerance is only a
-          // similar/inferred one — green.
-          const dimensionText = product.dimensions.toLowerCase();
-          (distance < 1e-9 ? directTerms : synonymTerms).add(dimensionText);
+      for (const field of FIELDS) {
+        if (fieldHit(index.fields[field], matcher)) {
+          score += matcher.weights[field];
+          hit = true;
         }
+      }
+      if (hit) {
+        const target = matcher.isSynonym ? synonymTerms : directTerms;
+        highlightForms(matcher, index).forEach((form) => target.add(form));
       }
     }
 
     if (score > 0) matches.set(product.id, { score, directTerms, synonymTerms });
-  });
+  }
 
   return matches;
+}
+
+function escapeRegExp(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function escapeHtml(str: string): string {

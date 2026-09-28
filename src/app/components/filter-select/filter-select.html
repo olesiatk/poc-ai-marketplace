@@ -1,5 +1,5 @@
 <div class="relative">
-  <label [for]="id()" class="block text-[11px] font-bold uppercase tracking-wide mb-2">{{ label() }}</label>
+  <label [for]="id()" class="block text-[10px] font-bold uppercase tracking-wide mb-1">{{ label() }}</label>
 
   <div class="relative">
     <input
@@ -16,7 +16,7 @@
       (focus)="onFocus()"
       (blur)="onBlur()"
       (keydown.escape)="onEscape()"
-      class="w-full pl-3 pr-8 py-2.5 border border-ink text-[13px] bg-white text-ink placeholder:text-ink outline-none focus:border-brand-dark"
+      class="w-full pl-2.5 pr-8 py-1.5 border border-ink text-[13px] bg-white text-ink placeholder:text-ink outline-none focus:border-brand-dark"
     />
     <span class="absolute right-2.5 top-1/2 -translate-y-1/2 flex text-ink pointer-events-none">
       <app-icon name="chevron-down" [size]="14" />

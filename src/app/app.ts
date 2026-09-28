@@ -4,23 +4,44 @@ import { HeroComponent } from "./components/hero/hero";
 import { FiltersBarComponent, type FilterChangeEvent } from "./components/filters-bar/filters-bar";
 import { ProductGridComponent } from "./components/product-grid/product-grid";
 import { ProductModalComponent } from "./components/product-modal/product-modal";
-import { aiSearch } from "./lib/groq";
+import {
+  SearchComparisonComponent,
+  type ComparisonSelection,
+  type ComparisonSide,
+} from "./components/search-comparison/search-comparison";
+import { ACTIVE_DATASET } from "./datasets/active";
+import { AiResults, type AiResult, type AiSnapshotFile } from "./lib/ai-results";
+import { groupReviews } from "./lib/catalog";
+import { missedByKeyword, rankChanges } from "./lib/comparison";
+import { formatDate } from "./lib/format";
+import { aiSearch, isGroqConfigured } from "./lib/groq";
 import { watchIframeHeight } from "./lib/iframe-resize";
 import { isEmbedded, listenToHost, sendFrameReady, sendTourStatus } from "./lib/post-message";
-import { wordFormProducts } from "./lib/search";
+import { localHeuristicSearch, wordFormProducts } from "./lib/search";
 import { buildVocabulary } from "./lib/suggestions";
 import { DEMO_QUERY, createTour } from "./lib/tour";
-import type { AiMode, Filters, MatchesMap, Product, ReviewsMap } from "./models/product.model";
+import type { Filters, MatchesMap, Product, Review, ReviewsMap } from "./models/product.model";
 
-const EMPTY_FILTERS: Filters = { category: "", room: "", material: "", maxPrice: Infinity };
+const EMPTY_FILTERS: Filters = { category: "", brand: "", maxPrice: Infinity, minRating: 0 };
+const NO_MATCHES: MatchesMap = new Map();
+
+/** The query shown on first load — the catalog's first preset, served from the recording. */
+const DEFAULT_QUERY = ACTIVE_DATASET.presetQueries[0]?.query ?? "";
 
 function uniqueSorted(arr: string[]): string[] {
   return [...new Set(arr)].sort((a, b) => a.localeCompare(b, "en"));
 }
 
+/** `products` that are in `matches`, best score first (most-rated breaks ties). */
+function rankedBy(products: Product[], matches: MatchesMap): Product[] {
+  return products
+    .filter((p) => matches.has(p.id))
+    .sort((a, b) => matches.get(b.id)!.score - matches.get(a.id)!.score || b.ratingCount - a.ratingCount);
+}
+
 @Component({
   selector: "app-root",
-  imports: [HeroComponent, FiltersBarComponent, ProductGridComponent, ProductModalComponent],
+  imports: [HeroComponent, FiltersBarComponent, ProductGridComponent, ProductModalComponent, SearchComparisonComponent],
   templateUrl: "./app.html",
 })
 export class App implements OnDestroy {
@@ -33,6 +54,7 @@ export class App implements OnDestroy {
   // resize feedback loop. Only meaningful in standalone/dev use anyway,
   // where the iframe height isn't externally driven by us.
   protected readonly embedded = isEmbedded();
+  protected readonly presets = ACTIVE_DATASET.presetQueries;
 
   protected readonly products = signal<Product[]>([]);
   protected readonly reviews = signal<ReviewsMap>({});
@@ -41,60 +63,95 @@ export class App implements OnDestroy {
   protected readonly filters = signal<Filters>(EMPTY_FILTERS);
   protected readonly searchValue = signal("");
   protected readonly query = signal("");
-  protected readonly matches = signal<MatchesMap>(new Map());
-  protected readonly aiMode = signal<AiMode>(null);
+  protected readonly aiResult = signal<AiResult | null>(null);
   protected readonly isSearching = signal(false);
-  protected readonly statusMessage = signal("");
-  protected readonly selectedId = signal<string | null>(null);
+  protected readonly selected = signal<ComparisonSelection | null>(null);
+
+  private aiResults: AiResults | null = null;
+  // Guards against a slow AI response for an older query overwriting a newer one.
+  private searchSeq = 0;
 
   protected readonly priceLimit = computed(() => {
     const list = this.products();
-    return list.length ? Math.max(...list.map((p) => p.price)) : 25000;
+    return list.length ? Math.ceil(Math.max(...list.map((p) => p.price))) : 0;
   });
 
   protected readonly searchVocabulary = computed(() => buildVocabulary(this.products()));
 
   protected readonly filterOptions = computed(() => {
     const list = this.products();
-    if (!list.length) return { categories: [], rooms: [], materials: [] };
     return {
       categories: uniqueSorted(list.map((p) => p.category)),
-      rooms: uniqueSorted(list.flatMap((p) => p.room.split(",").map((s) => s.trim()))),
-      materials: uniqueSorted(
-        list.flatMap((p) => p.material.split(/[,()]/).map((s) => s.trim()).filter(Boolean))
-      ),
+      brands: uniqueSorted(list.map((p) => p.store)),
     };
   });
 
-  protected readonly filteredProducts = computed(() => {
+  /** The catalog after the manual filters — shared by the browse grid and both comparison sides. */
+  protected readonly filteredCatalog = computed(() => {
     const filters = this.filters();
+    return this.products().filter(
+      (p) =>
+        (!filters.category || p.category === filters.category) &&
+        (!filters.brand || p.store === filters.brand) &&
+        p.price <= filters.maxPrice &&
+        p.averageRating >= filters.minRating
+    );
+  });
+
+  /** No query: the whole (filtered) catalog, most-rated first. */
+  protected readonly browseProducts = computed(() => [...this.filteredCatalog()].sort((a, b) => b.ratingCount - a.ratingCount));
+
+  /**
+   * The "without AI" side: the same local search with no concept groups —
+   * stemming and field weighting, but no synonym expansion and no LLM.
+   * Synchronous and instant, so it shows while the AI side is still working.
+   */
+  protected readonly keywordMatches = computed(() => {
     const query = this.query();
-    const matches = this.matches();
+    return query ? localHeuristicSearch(query, this.products(), this.reviews(), []) : NO_MATCHES;
+  });
+  protected readonly aiMatches = computed(() => this.aiResult()?.matches ?? NO_MATCHES);
 
-    let list = this.products().filter((p) => {
-      if (filters.category && p.category !== filters.category) return false;
-      if (filters.room && !p.room.toLowerCase().includes(filters.room.toLowerCase())) return false;
-      if (filters.material && !p.material.toLowerCase().includes(filters.material.toLowerCase())) return false;
-      if (p.price > filters.maxPrice) return false;
-      return true;
-    });
+  protected readonly keywordProducts = computed(() => rankedBy(this.filteredCatalog(), this.keywordMatches()));
+  protected readonly aiProducts = computed(() => rankedBy(this.filteredCatalog(), this.aiMatches()));
 
-    if (query) {
-      list = list.filter((p) => matches.has(p.id));
-      list = [...list].sort((a, b) => matches.get(b.id)!.score - matches.get(a.id)!.score);
-    }
+  private readonly keywordIds = computed(() => this.keywordProducts().map((p) => p.id));
+  private readonly aiIds = computed(() => this.aiProducts().map((p) => p.id));
+  protected readonly rankChanges = computed(() => rankChanges(this.keywordIds(), this.aiIds()));
+  protected readonly missedCount = computed(() => missedByKeyword(this.keywordIds(), this.aiIds()));
 
-    return list;
+  protected readonly aiNote = computed(() => {
+    const result = this.aiResult();
+    if (!result) return null;
+    if (result.mode === "recorded") return `Recorded AI run · ${formatDate(result.recordedAt!)}`;
+    if (result.mode === "groq") return "Live AI";
+    return result.aiUnavailable ? "AI busy · local synonyms" : "Local synonyms";
+  });
+
+  protected readonly statusMessage = computed(() => {
+    if (!this.query()) return "";
+    if (this.isSearching()) return "AI is analyzing your query…";
+    if (!this.aiResult()) return "";
+    const missed = this.missedCount();
+    const aiCount = this.aiProducts().length;
+    const keywordCount = this.keywordProducts().length;
+    if (missed > 0) return `AI found ${missed} ${wordFormProducts(missed)} keyword search missed.`;
+    if (aiCount === 0) return "AI found nothing relevant for this query. Try rephrasing it.";
+    // Nothing new, but a much shorter list — the win here is cutting the noise.
+    if (aiCount < keywordCount) return `AI narrowed ${keywordCount} keyword results down to the ${aiCount} relevant ones.`;
+    return "AI found no extra products for this query — it only re-ranked what keyword search found.";
   });
 
   protected readonly selectedProduct = computed(() => {
-    const id = this.selectedId();
-    return id ? this.products().find((p) => p.id === id) ?? null : null;
+    const sel = this.selected();
+    return sel ? this.products().find((p) => p.id === sel.id) ?? null : null;
   });
 
+  /** Highlighting follows the side the product was opened from; none from the browse grid. */
   protected readonly selectedMatchInfo = computed(() => {
-    const id = this.selectedId();
-    return id ? this.matches().get(id) ?? null : null;
+    const sel = this.selected();
+    if (!sel || !this.query()) return null;
+    return (sel.side === "keyword" ? this.keywordMatches() : this.aiMatches()).get(sel.id) ?? null;
   });
 
   private tourDriver: Driver | null = null;
@@ -104,14 +161,25 @@ export class App implements OnDestroy {
 
   constructor() {
     Promise.all([
-      fetch("data/products.json").then((r) => r.json()),
-      fetch("data/reviews.json").then((r) => r.json()),
+      fetch(ACTIVE_DATASET.productsUrl).then((r) => r.json()),
+      fetch(ACTIVE_DATASET.reviewsUrl).then((r) => r.json()),
+      // Optional — without it, preset queries just go to the live AI like any other.
+      fetch(ACTIVE_DATASET.aiSnapshotsUrl)
+        .then((r) => (r.ok ? r.json() : null))
+        .catch(() => null),
     ])
-      .then(([products, reviews]: [Product[], ReviewsMap]) => {
+      .then(([products, reviews, snapshot]: [Product[], Review[], AiSnapshotFile | null]) => {
         this.products.set(products);
-        this.reviews.set(reviews);
-        const maxPrice = Math.max(...products.map((p) => p.price));
-        this.filters.update((f) => ({ ...f, maxPrice }));
+        this.reviews.set(groupReviews(reviews));
+        this.filters.update((f) => ({ ...f, maxPrice: this.priceLimit() }));
+        this.aiResults = new AiResults(
+          snapshot,
+          aiSearch,
+          (query, list, reviewsMap) => localHeuristicSearch(query, list, reviewsMap),
+          isGroqConfigured
+        );
+        // Open straight on a comparison, so the difference is visible without typing anything.
+        this.runQuery(DEFAULT_QUERY);
       })
       .catch((err) => this.loadError.set(err.message));
 
@@ -133,9 +201,10 @@ export class App implements OnDestroy {
     });
   }
 
+  /** Undoes the tour's demo: closes the modal and puts the default comparison back. */
   private resetTourDemo(): void {
-    this.selectedId.set(null);
-    this.onClearQuery();
+    this.selected.set(null);
+    this.runQuery(DEFAULT_QUERY);
     sendTourStatus(false);
   }
 
@@ -145,44 +214,42 @@ export class App implements OnDestroy {
 
   protected onResetFilters(): void {
     this.filters.set({ ...EMPTY_FILTERS, maxPrice: this.priceLimit() });
-    this.searchValue.set("");
-    this.query.set("");
-    this.matches.set(new Map());
-    this.aiMode.set(null);
-    this.statusMessage.set("");
+    this.onClearQuery();
+  }
+
+  /** Fills the search box with `query` and runs it — for preset chips, first load and the tour. */
+  protected runQuery(query: string): Promise<void> {
+    this.searchValue.set(query);
+    return this.onSearch(query);
   }
 
   protected async onSearch(rawQuery: string): Promise<void> {
     const trimmed = rawQuery.trim();
+    const seq = ++this.searchSeq;
     this.query.set(trimmed);
-    if (!trimmed) {
-      this.matches.set(new Map());
-      this.aiMode.set(null);
-      this.statusMessage.set("");
+    this.aiResult.set(null);
+    if (!trimmed || !this.aiResults) {
+      this.isSearching.set(false);
       return;
     }
 
     this.isSearching.set(true);
-    this.aiMode.set(null);
-    this.statusMessage.set("AI is analyzing your query…");
-    const result = await aiSearch(trimmed, this.products(), this.reviews());
-    this.matches.set(result.matches);
-    this.aiMode.set(result.mode);
+    const result = await this.aiResults.search(trimmed, this.products(), this.reviews());
+    if (seq !== this.searchSeq) return;
+    this.aiResult.set(result);
     this.isSearching.set(false);
-
-    if (result.matches.size === 0) {
-      this.statusMessage.set("AI didn't find any close matches for this query. Try rephrasing it.");
-    } else {
-      this.statusMessage.set(`AI matched ${result.matches.size} ${wordFormProducts(result.matches.size)} to your query.`);
-    }
   }
 
   protected onClearQuery(): void {
+    this.searchSeq++;
     this.searchValue.set("");
     this.query.set("");
-    this.matches.set(new Map());
-    this.aiMode.set(null);
-    this.statusMessage.set("");
+    this.aiResult.set(null);
+    this.isSearching.set(false);
+  }
+
+  protected onSelect(id: string, side: ComparisonSide | null = null): void {
+    this.selected.set(side ? { id, side } : { id, side: "ai" });
   }
 
   ngOnDestroy(): void {
@@ -193,13 +260,10 @@ export class App implements OnDestroy {
 
   protected startTour(): void {
     this.tourDriver ??= createTour({
-      runDemoSearch: async () => {
-        this.searchValue.set(DEMO_QUERY);
-        await this.onSearch(DEMO_QUERY);
-      },
+      runDemoSearch: () => this.runQuery(DEMO_QUERY),
       openFirstResult: () => {
-        const first = this.filteredProducts()[0];
-        if (first) this.selectedId.set(first.id);
+        const first = this.aiProducts()[0];
+        if (first) this.selected.set({ id: first.id, side: "ai" });
       },
       reset: () => this.resetTourDemo(),
     });

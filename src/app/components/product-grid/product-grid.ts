@@ -1,9 +1,28 @@
-import { Component, ElementRef, computed, effect, inject, input, output, signal } from "@angular/core";
+import { Component, ElementRef, computed, effect, inject, input, output, signal, untracked } from "@angular/core";
+import { breakpointSignal, type Breakpoint } from "../../lib/breakpoints";
 import { ProductCardComponent } from "../product-card/product-card";
 import { wordFormProducts } from "../../lib/search";
-import type { MatchesMap, Product, Review, ReviewsMap } from "../../models/product.model";
+import type { MatchesMap, Product } from "../../models/product.model";
 
-const PAGE_SIZE = 12;
+/**
+ * Grid column count by viewport width (widest first; narrower than all of
+ * these → MIN_COLUMNS). The grid's column template is driven from this
+ * same table, so the page size below always matches what's on screen.
+ * Inside an <iframe> these are the iframe's own width, not the host page's.
+ */
+const COLUMN_BREAKPOINTS: readonly Breakpoint<number>[] = [
+  { minWidth: 1280, value: 5 },
+  { minWidth: 1024, value: 4 },
+  { minWidth: 640, value: 3 },
+];
+const MIN_COLUMNS = 2;
+// Used where matchMedia doesn't exist (jsdom in unit tests).
+const FALLBACK_COLUMNS = 4;
+
+/** Each page is this many full rows — one more on the narrowest layout, where rows are only two cards wide. */
+function rowsPerPage(columns: number): number {
+  return columns <= MIN_COLUMNS ? 3 : 2;
+}
 /** Total page-number buttons shown before collapsing the middle into an ellipsis. */
 const MAX_VISIBLE_PAGES = 7;
 
@@ -16,7 +35,6 @@ export type PageEntry = number | "ellipsis";
 })
 export class ProductGridComponent {
   readonly products = input.required<Product[]>();
-  readonly reviews = input.required<ReviewsMap>();
   readonly matches = input.required<MatchesMap>();
   readonly query = input("");
   readonly isSearching = input(false);
@@ -26,12 +44,14 @@ export class ProductGridComponent {
 
   protected readonly wordFormProducts = wordFormProducts;
   protected readonly currentPage = signal(1);
+  protected readonly columns = breakpointSignal(COLUMN_BREAKPOINTS, MIN_COLUMNS, FALLBACK_COLUMNS);
+  protected readonly pageSize = computed(() => this.columns() * rowsPerPage(this.columns()));
 
-  protected readonly totalPages = computed(() => Math.max(1, Math.ceil(this.products().length / PAGE_SIZE)));
+  protected readonly totalPages = computed(() => Math.max(1, Math.ceil(this.products().length / this.pageSize())));
 
   protected readonly visibleProducts = computed(() => {
-    const start = (this.currentPage() - 1) * PAGE_SIZE;
-    return this.products().slice(start, start + PAGE_SIZE);
+    const start = (this.currentPage() - 1) * this.pageSize();
+    return this.products().slice(start, start + this.pageSize());
   });
 
   protected readonly pageNumbers = computed<PageEntry[]>(() => {
@@ -54,6 +74,8 @@ export class ProductGridComponent {
 
   private readonly elementRef = inject(ElementRef<HTMLElement>);
 
+  private previousPageSize = this.pageSize();
+
   constructor() {
     // A new search or filter yields a new `products` array — reset back to
     // the first page rather than keeping a stale offset into it.
@@ -61,10 +83,15 @@ export class ProductGridComponent {
       this.products();
       this.currentPage.set(1);
     });
-  }
 
-  protected reviewsFor(id: string): Review[] {
-    return this.reviews()[id] || [];
+    // A resize that changes the column count changes the page size — stay
+    // on whichever page now contains the first product that was showing.
+    effect(() => {
+      const size = this.pageSize();
+      const firstShown = (untracked(this.currentPage) - 1) * this.previousPageSize;
+      this.previousPageSize = size;
+      this.currentPage.set(Math.floor(firstShown / size) + 1);
+    });
   }
 
   protected matchFor(id: string) {

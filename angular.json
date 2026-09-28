@@ -21,7 +21,12 @@
             "assets": [
               {
                 "glob": "**/*",
-                "input": "public"
+                "input": "public",
+                "ignore": [
+                  "data/products.json",
+                  "data/reviews.json",
+                  "data/products-with-reviews.json"
+                ]
               }
             ],
             "styles": [

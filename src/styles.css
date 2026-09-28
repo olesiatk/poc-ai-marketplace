@@ -165,6 +165,13 @@ mark.hl-synonym {
   min-height: 40px;
 }
 
+/* Same button, sized to line up with the compact filter inputs. */
+.cta-label--compact {
+  font-size: 12px;
+  padding: 6px 16px;
+  min-height: 34px;
+}
+
 @keyframes mic-pulse {
   0% {
     box-shadow: 0 0 0 0 rgba(224, 68, 46, 0.5);
@@ -275,4 +282,162 @@ input[type="range"] {
 .driver-popover.leobit-driver-theme .driver-popover-arrow-side-bottom.driver-popover-arrow {
   border-bottom-color: #7fca03;
   border-radius: 0;
+}
+
+/* ── Keyword-vs-AI search comparison ─────────────────────────────── */
+
+/* Position number on a comparison result (like Algolia's "1", "2", …). */
+.rank-number {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+/* How an AI result moved vs. keyword search: "AI only" / ↑N / ↓N / =. */
+.rank-badge {
+  height: 20px;
+  padding: 0 6px;
+  display: inline-flex;
+  align-items: center;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+.rank-badge--new {
+  background-image: var(--gradient-brand);
+  color: #fff;
+  text-transform: uppercase;
+}
+.rank-badge--up {
+  background: #e3f5d0;
+  color: var(--color-brand-dark);
+}
+.rank-badge--down,
+.rank-badge--same {
+  background: var(--color-surface);
+  color: var(--color-body);
+}
+
+/* An AI-only find: a gradient rule down its left edge. */
+.is-ai-only {
+  box-shadow: inset 3px 0 0 0 var(--color-brand);
+}
+
+/* The same product, hovered in the other comparison column. */
+.is-paired {
+  outline: 2px solid var(--color-brand-dark);
+  outline-offset: -2px;
+}
+
+/* Ready-made query chips under the search bar, each tagged with the AI capability it shows off. */
+.preset-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 24px;
+  padding: 0 8px 0 3px;
+  background: #fff;
+  border: 1px solid var(--color-line);
+  font-size: 12px;
+  color: var(--color-ink);
+  white-space: nowrap;
+  transition: border-color 0.15s;
+}
+.preset-chip:hover {
+  border-color: var(--color-ink);
+}
+.preset-chip__label {
+  padding: 1px 5px;
+  background: var(--color-surface);
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-body);
+}
+.preset-chip--active {
+  border-color: var(--color-brand-dark);
+  box-shadow: inset 0 0 0 1px var(--color-brand-dark);
+}
+.preset-chip--active .preset-chip__label {
+  background-image: var(--gradient-brand);
+  color: #fff;
+}
+/* One row of chips that scrolls sideways instead of wrapping into a second row. */
+.preset-row {
+  scrollbar-width: none;
+  justify-content: safe center;
+}
+.preset-row::-webkit-scrollbar {
+  display: none;
+}
+.preset-chip {
+  flex-shrink: 0;
+}
+
+/* The AI side of the comparison: a framed white panel with the brand
+   gradient along the top, so it reads as a separate result set from the
+   keyword side (which stays on the bare page background — deliberately not
+   muted or desaturated, it must still look like a real, working search). */
+.ai-panel {
+  background: #fff;
+  border: 1px solid rgba(36, 180, 0, 0.35);
+  border-top: 0;
+  padding: 12px 12px 10px;
+  position: relative;
+  box-shadow: 0 2px 12px rgba(36, 180, 0, 0.1);
+}
+.ai-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0 -1px auto -1px;
+  height: 3px;
+  background-image: var(--gradient-brand);
+}
+
+/* Text area of results inside the AI panel: a faint green instead of the neutral surface grey. */
+.is-ai-tint {
+  background-color: #f3f8ec;
+}
+
+/* Vertical rule + "VS" marker in the gap between the two comparison columns. */
+.vs-divider {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 1px;
+  background: #dcdcdc;
+  pointer-events: none;
+}
+.vs-divider span {
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-ink);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+}
+/* Unlayered, so it beats the row's Tailwind hover utility — keep a hover state of its own. */
+button.is-ai-tint:hover {
+  background-color: #e6f0da;
+}
+/* Same top inset as the AI panel's padding + gradient rule, so both columns' rows line up. */
+.keyword-column {
+  padding-top: 12px;
 }

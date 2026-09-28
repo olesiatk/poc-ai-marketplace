@@ -1,0 +1,353 @@
+{
+  "recordedAt": "2026-09-28T12:35:23.569Z",
+  "model": "openai/gpt-oss-20b",
+  "queries": {
+    "unscented": [
+      {
+        "id": "B0B7BTFBMT",
+        "score": 95,
+        "directTerms": [
+          "unscented"
+        ],
+        "synonymTerms": [
+          "fragrance-free",
+          "sensitive skin"
+        ]
+      },
+      {
+        "id": "B071S98JST",
+        "score": 95,
+        "directTerms": [],
+        "synonymTerms": [
+          "fragrance free",
+          "fragrance free haircare",
+          "sensitive hair"
+        ]
+      },
+      {
+        "id": "B01HYN6G4Y",
+        "score": 90,
+        "directTerms": [
+          "unscented"
+        ],
+        "synonymTerms": [
+          "fragrance-free",
+          "baby shampoo"
+        ]
+      },
+      {
+        "id": "B085J9K64C",
+        "score": 85,
+        "directTerms": [],
+        "synonymTerms": [
+          "fragrance free",
+          "baby powder",
+          "talc-free"
+        ]
+      },
+      {
+        "id": "B076DLXF8G",
+        "score": 85,
+        "directTerms": [
+          "unscented"
+        ],
+        "synonymTerms": [
+          "travel packets",
+          "flushable"
+        ]
+      },
+      {
+        "id": "B09JGLT4DB",
+        "score": 85,
+        "directTerms": [],
+        "synonymTerms": [
+          "fragrance-free",
+          "retinol",
+          "anti-aging"
+        ]
+      },
+      {
+        "id": "B08MRRNL18",
+        "score": 85,
+        "directTerms": [],
+        "synonymTerms": [
+          "fragrance free",
+          "mascara",
+          "hypoallergenic"
+        ]
+      },
+      {
+        "id": "B09Q3X5YWR",
+        "score": 85,
+        "directTerms": [],
+        "synonymTerms": [
+          "fragrance free",
+          "highlighter",
+          "gluten free"
+        ]
+      },
+      {
+        "id": "B071F78NNF",
+        "score": 85,
+        "directTerms": [],
+        "synonymTerms": [
+          "fragrance free",
+          "pressed powder",
+          "oil free"
+        ]
+      },
+      {
+        "id": "B087J6PP9X",
+        "score": 85,
+        "directTerms": [],
+        "synonymTerms": [
+          "fragrance free",
+          "foundation",
+          "salicylic acid"
+        ]
+      },
+      {
+        "id": "B07FW9XPDD",
+        "score": 85,
+        "directTerms": [],
+        "synonymTerms": [
+          "fragrance-free",
+          "liquid eyeliner",
+          "water-based"
+        ]
+      }
+    ],
+    "hydrating face cream": [
+      {
+        "id": "B07TVFCPGP",
+        "score": 95,
+        "directTerms": [],
+        "synonymTerms": [
+          "hydrating & moisturizing",
+          "vitamin e cream"
+        ]
+      },
+      {
+        "id": "B07K6VJFQH",
+        "score": 93,
+        "directTerms": [],
+        "synonymTerms": [
+          "hydrating & moisturizing",
+          "vitamin e moisturizer"
+        ]
+      },
+      {
+        "id": "B07N5B8WWR",
+        "score": 90,
+        "directTerms": [],
+        "synonymTerms": [
+          "face moisturizing cream",
+          "organic & 100% natural"
+        ]
+      },
+      {
+        "id": "B0899WQ65Z",
+        "score": 88,
+        "directTerms": [
+          "hydrating"
+        ],
+        "synonymTerms": [
+          "face cream"
+        ]
+      },
+      {
+        "id": "B08415FNQ8",
+        "score": 85,
+        "directTerms": [],
+        "synonymTerms": [
+          "face cream",
+          "organic rosehip"
+        ]
+      },
+      {
+        "id": "B071ZQY9QN",
+        "score": 83,
+        "directTerms": [],
+        "synonymTerms": [
+          "face moisturizer",
+          "organic hemp"
+        ]
+      },
+      {
+        "id": "B07GX259NR",
+        "score": 80,
+        "directTerms": [],
+        "synonymTerms": [
+          "face moisturizer",
+          "donkey milk"
+        ]
+      },
+      {
+        "id": "B01N5SHGS0",
+        "score": 75,
+        "directTerms": [],
+        "synonymTerms": [
+          "hydrating moisturizer",
+          "collagen peptides"
+        ]
+      },
+      {
+        "id": "B08CRZ1QQV",
+        "score": 70,
+        "directTerms": [],
+        "synonymTerms": [
+          "hydrating repair",
+          "moisturizing"
+        ]
+      },
+      {
+        "id": "B08KLBTJF3",
+        "score": 68,
+        "directTerms": [],
+        "synonymTerms": [
+          "moisturizing",
+          "oats cream"
+        ]
+      },
+      {
+        "id": "B09JGLT4DB",
+        "score": 65,
+        "directTerms": [],
+        "synonymTerms": [
+          "night cream",
+          "retinol"
+        ]
+      },
+      {
+        "id": "B0115YS3OE",
+        "score": 60,
+        "directTerms": [],
+        "synonymTerms": [
+          "moisturizing face oil",
+          "vitamin c"
+        ]
+      }
+    ],
+    "shampoo without fragrance": [
+      {
+        "id": "B071S98JST",
+        "score": 95,
+        "directTerms": [],
+        "synonymTerms": [
+          "fragrance free shampoo",
+          "fragrance free haircare",
+          "sensitive hair and scalp"
+        ]
+      },
+      {
+        "id": "B07YBW9KTX",
+        "score": 90,
+        "directTerms": [],
+        "synonymTerms": [
+          "no parabens or fragrences",
+          "baby shampoo & body wash",
+          "all natural, plant-based"
+        ]
+      }
+    ],
+    "gift set under $25": [
+      {
+        "id": "B09TZDYW52",
+        "score": 95,
+        "directTerms": [],
+        "synonymTerms": [
+          "gift set",
+          "rose petals soap",
+          "hand body bath accessories"
+        ]
+      },
+      {
+        "id": "B09QV6D983",
+        "score": 92,
+        "directTerms": [],
+        "synonymTerms": [
+          "gift set",
+          "hand cream",
+          "olive oil hand"
+        ]
+      },
+      {
+        "id": "B0B6QD5J3Q",
+        "score": 90,
+        "directTerms": [],
+        "synonymTerms": [
+          "gift box",
+          "spa set",
+          "women's post shave hydrating serum"
+        ]
+      },
+      {
+        "id": "B07GVSPYM3",
+        "score": 88,
+        "directTerms": [
+          "gift"
+        ],
+        "synonymTerms": [
+          "massage oil",
+          "serenity set"
+        ]
+      }
+    ],
+    "my hair gets frizzy in humid weather": [
+      {
+        "id": "B072KBVZTJ",
+        "score": 90,
+        "directTerms": [],
+        "synonymTerms": [
+          "frizz-removing",
+          "moisturize your hair",
+          "hydrating"
+        ]
+      },
+      {
+        "id": "B07M93CSCJ",
+        "score": 90,
+        "directTerms": [],
+        "synonymTerms": [
+          "frizz-removing",
+          "moisturize your hair",
+          "hydrating"
+        ]
+      },
+      {
+        "id": "B07G375Q36",
+        "score": 85,
+        "directTerms": [],
+        "synonymTerms": [
+          "humidity resistant",
+          "invisible flexible",
+          "hair spray"
+        ]
+      },
+      {
+        "id": "B003L8V8R2",
+        "score": 80,
+        "directTerms": [],
+        "synonymTerms": [
+          "frizz-free hair",
+          "ceramic and ionic technology",
+          "heats up evenly"
+        ]
+      }
+    ],
+    "maybelline mascara": [
+      {
+        "id": "B081ZBF1RN",
+        "score": 100,
+        "directTerms": [],
+        "synonymTerms": [
+          "maybelline new york",
+          "lash sensational curvitude",
+          "curved wand",
+          "layers of lashes",
+          "best mascara"
+        ]
+      }
+    ]
+  }
+}

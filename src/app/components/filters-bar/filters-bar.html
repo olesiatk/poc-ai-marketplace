@@ -1,6 +1,5 @@
-<section class="mx-auto max-w-6xl px-8 pt-6 pb-2" data-tour="filters-bar">
-  <p class="eyebrow mb-4">manual filters</p>
-  <div class="bg-surface px-7 py-6 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-5 items-end">
+<section class="mx-auto max-w-7xl px-4 sm:px-8 pt-1 pb-1" data-tour="filters-bar">
+  <div class="bg-surface px-4 py-3 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-x-4 gap-y-3 items-end">
     <app-filter-select
       id="f-category"
       label="Category"
@@ -10,40 +9,40 @@
       (valueChange)="onSelectChange('category', $event)"
     />
     <app-filter-select
-      id="f-room"
-      label="Room"
-      [value]="filters().room"
-      [options]="options().rooms"
-      placeholder="Any"
-      (valueChange)="onSelectChange('room', $event)"
+      id="f-brand"
+      label="Brand"
+      [value]="filters().brand"
+      [options]="options().brands"
+      placeholder="All brands"
+      (valueChange)="onSelectChange('brand', $event)"
     />
     <app-filter-select
-      id="f-material"
-      label="Material"
-      [value]="filters().material"
-      [options]="options().materials"
+      id="f-rating"
+      label="Rating"
+      [value]="ratingLabel()"
+      [options]="ratingOptions"
       placeholder="Any"
-      (valueChange)="onSelectChange('material', $event)"
+      (valueChange)="onRatingChange($event)"
     />
     <div>
-      <label for="f-price" class="block text-[11px] font-bold uppercase tracking-wide mb-2">Max price, $</label>
+      <label for="f-price" class="block text-[10px] font-bold uppercase tracking-wide mb-1">Max price, $</label>
       <input
         id="f-price"
         type="range"
-        [min]="10"
+        [min]="0"
         [max]="priceLimit()"
-        [step]="5"
+        [step]="1"
         [value]="filters().maxPrice"
         (input)="onPriceChange($event)"
         class="w-full"
       />
-      <output class="block mt-1.5 text-xs font-bold text-gradient-brand">{{ formatPrice(filters().maxPrice) }}</output>
+      <output class="block mt-0.5 text-xs font-bold text-gradient-brand">{{ formatPrice(filters().maxPrice) }}</output>
     </div>
     <div>
       <button
         type="button"
         (click)="reset.emit()"
-        class="cta-label border-1 text-ink font-bold uppercase text-xs tracking-wide px-5 py-2.5 hover:bg-ink hover:text-white transition-colors"
+        class="cta-label cta-label--compact border-1 text-ink font-bold uppercase text-xs tracking-wide hover:bg-ink hover:text-white transition-colors"
       >
         Reset all
       </button>

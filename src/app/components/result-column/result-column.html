@@ -1,0 +1,82 @@
+<div class="flex items-baseline justify-between gap-2 min-h-9" [class]="side() === 'ai' ? 'mb-2.5' : 'mb-2 pb-1.5 border-b-2 border-[#d4d4d4]'">
+  <div class="min-w-0">
+    <p class="text-[12px] font-extrabold uppercase tracking-wide" [class.text-gradient-brand]="side() === 'ai'">
+      {{ heading() }}
+      <span class="font-bold normal-case tracking-normal" [class]="side() === 'ai' ? 'text-brand-dark' : 'text-body'">
+        · {{ loading() ? "…" : products().length }} {{ loading() ? "" : wordFormProducts(products().length) }}
+      </span>
+    </p>
+    <p class="text-[10px] text-body leading-tight">{{ subheading() }}</p>
+  </div>
+  @if (note(); as n) {
+    <span class="shrink-0 text-[9px] font-bold uppercase tracking-wide bg-surface text-ink px-1.5 py-0.5">{{ n }}</span>
+  }
+</div>
+
+@if (loading()) {
+  <output class="flex flex-col items-center justify-center gap-2 py-12">
+    <div class="w-7 h-7 border-4 border-line border-t-brand-dark rounded-full animate-spin"></div>
+    <p class="text-xs text-body">AI is analyzing the catalog…</p>
+  </output>
+} @else if (products().length === 0) {
+  <p class="bg-surface text-center text-body text-xs px-4 py-10">{{ emptyText() }}</p>
+} @else {
+  @if (layout() === "cards") {
+    <div class="grid gap-2" [style.grid-template-columns]="'repeat(' + cardsPerRow() + ', minmax(0, 1fr))'">
+      @for (item of visible(); track item.product.id) {
+        <app-product-card
+          [product]="item.product"
+          [compact]="true"
+          [aiTint]="side() === 'ai'"
+          [rank]="item.rank"
+          [rankChange]="changeFor(item.product.id)"
+          [reason]="reasonFor(item.product.id)"
+          [paired]="hoveredId() === item.product.id"
+          [attr.data-tour]="tourTarget() && $index === 0 ? tourTarget() : null"
+          (select)="select.emit($event)"
+          (hoverChange)="hoverChange.emit($event)"
+        />
+      }
+    </div>
+  } @else {
+    <div class="flex flex-col gap-1.5">
+      @for (item of visible(); track item.product.id) {
+        <app-product-row
+          [product]="item.product"
+          [aiTint]="side() === 'ai'"
+          [rank]="item.rank"
+          [rankChange]="changeFor(item.product.id)"
+          [reason]="reasonFor(item.product.id)"
+          [paired]="hoveredId() === item.product.id"
+          [attr.data-tour]="tourTarget() && $index === 0 ? tourTarget() : null"
+          (select)="select.emit($event)"
+          (hoverChange)="hoverChange.emit($event)"
+        />
+      }
+    </div>
+  }
+
+  @if (totalPages() > 1) {
+    <nav class="flex items-center justify-center gap-2 mt-2.5" [attr.aria-label]="heading() + ' pages'">
+      <button
+        type="button"
+        (click)="goTo(page() - 1)"
+        [disabled]="page() === 1"
+        aria-label="Previous page"
+        class="w-7 h-7 text-xs font-bold border border-ink disabled:opacity-30 disabled:cursor-not-allowed hover:enabled:bg-ink hover:enabled:text-white transition-colors"
+      >
+        ‹
+      </button>
+      <span class="text-[11px] font-bold text-body min-w-12 text-center">{{ page() }} / {{ totalPages() }}</span>
+      <button
+        type="button"
+        (click)="goTo(page() + 1)"
+        [disabled]="page() === totalPages()"
+        aria-label="Next page"
+        class="w-7 h-7 text-xs font-bold border border-ink disabled:opacity-30 disabled:cursor-not-allowed hover:enabled:bg-ink hover:enabled:text-white transition-colors"
+      >
+        ›
+      </button>
+    </nav>
+  }
+}

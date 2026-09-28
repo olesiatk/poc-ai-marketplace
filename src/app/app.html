@@ -9,9 +9,12 @@
         [(value)]="searchValue"
         [isSearching]="isSearching()"
         [statusMessage]="statusMessage()"
-        [aiMode]="aiMode()"
         [vocabulary]="searchVocabulary()"
+        [presets]="presets"
+        [activeQuery]="query()"
         (submitQuery)="onSearch($event)"
+        (pickPreset)="runQuery($event)"
+        (clearQuery)="onClearQuery()"
         (howItWorks)="startTour()"
       />
       <app-filters-bar
@@ -21,22 +24,36 @@
         (filterChange)="onFilterChange($event)"
         (reset)="onResetFilters()"
       />
-      <app-product-grid
-        [products]="filteredProducts()"
-        [reviews]="reviews()"
-        [matches]="matches()"
-        [query]="query()"
-        [isSearching]="isSearching()"
-        (select)="selectedId.set($event)"
-        (clearQuery)="onClearQuery()"
-      />
+      @if (query()) {
+        <app-search-comparison
+          [query]="query()"
+          [keywordProducts]="keywordProducts()"
+          [aiProducts]="aiProducts()"
+          [keywordMatches]="keywordMatches()"
+          [aiMatches]="aiMatches()"
+          [rankChanges]="rankChanges()"
+          [aiLoading]="isSearching()"
+          [aiNote]="aiNote()"
+          (select)="onSelect($event.id, $event.side)"
+          (clearQuery)="onClearQuery()"
+        />
+      } @else {
+        <app-product-grid
+          [products]="browseProducts()"
+          [matches]="aiMatches()"
+          [query]="query()"
+          [isSearching]="isSearching()"
+          (select)="onSelect($event)"
+          (clearQuery)="onClearQuery()"
+        />
+      }
     </main>
     @if (selectedProduct(); as product) {
       <app-product-modal
         [product]="product"
         [reviews]="reviews()"
         [matchInfo]="selectedMatchInfo()"
-        (close)="selectedId.set(null)"
+        (close)="selected.set(null)"
       />
     }
   </div>

@@ -1,7 +1,8 @@
-<section class="mx-auto max-w-6xl px-8 pt-16 pb-10 text-center">
-  <h1 class="text-3xl sm:text-5xl font-black uppercase leading-tight mb-5 inline-flex items-center gap-3 flex-wrap justify-center">
-    <span>Marketplace filter <span class="text-gradient-brand">with AI</span></span>
-    <button
+<section class="mx-auto max-w-7xl px-4 sm:px-8 pt-5 pb-2 text-center">
+  <h1 class="text-2xl sm:text-3xl font-black uppercase leading-tight mb-1">
+    Marketplace filter
+    <!-- "with AI" and the "?" always wrap as one unit, never split across lines. -->
+    <span class="inline-flex items-center gap-3 whitespace-nowrap"><span class="text-gradient-brand">with AI</span><button
       type="button"
       (click)="howItWorks.emit()"
       aria-label="How it works"
@@ -9,9 +10,9 @@
       class="how-it-works-trigger inline-flex items-center justify-center w-4 h-4 border border-brand-dark text-brand-dark text-sm font-normal leading-none normal-case hover:bg-brand-dark hover:text-white transition-colors align-middle"
     >
       ?
-    </button>
+    </button></span>
   </h1>
-  <p class="max-w-xl mx-auto text-body text-sm sm:text-[15px] leading-relaxed mb-8">
+  <p class="max-w-3xl mx-auto text-body text-[13px] leading-snug mb-3">
     Describe what you need, by text or by voice — and AI will match products from the catalog based on their
     attributes and customer reviews.
   </p>
@@ -19,7 +20,7 @@
   <form
     (submit)="onSubmit($event)"
     data-tour="search-form"
-    class="glass-panel relative z-30 max-w-2xl mx-auto flex items-center gap-2.5 pl-5 pr-2 py-2"
+    class="glass-panel relative z-30 max-w-2xl mx-auto flex items-center gap-2.5 pl-4 pr-1.5 py-1.5"
     [class.glass-panel--error]="emptyQueryError()"
   >
     <app-icon name="search" [size]="20" class="text-body shrink-0" />
@@ -31,17 +32,28 @@
       (blur)="onBlur()"
       (keydown.escape)="onEscape()"
       autocomplete="off"
-      placeholder='e.g. "an outdoor table for the balcony"'
+      [placeholder]="placeholder"
       [attr.aria-invalid]="emptyQueryError() ? true : null"
       class="flex-1 min-w-0 border-none outline-none bg-transparent text-[15px] placeholder:text-neutral-400"
     />
+    @if (value()) {
+      <button
+        type="button"
+        (click)="onClear()"
+        aria-label="Clear search"
+        title="Clear search"
+        class="shrink-0 w-7 h-7 flex items-center justify-center text-body hover:text-ink"
+      >
+        <app-icon name="close" [size]="16" />
+      </button>
+    }
     <button
       type="button"
       (click)="onMicClick()"
       title="Voice search"
       aria-label="Voice search"
       data-tour="mic-button"
-      class="shrink-0 w-10 h-10 flex items-center justify-center transition-colors"
+      class="shrink-0 w-9 h-9 flex items-center justify-center transition-colors"
       [class]="isListening() ? 'bg-[#e0442e] text-white animate-mic-pulse' : 'bg-surface text-ink hover:bg-neutral-200'"
     >
       <app-icon name="mic" [size]="18" />
@@ -73,7 +85,25 @@
     }
   </form>
 
-  <div class="max-w-2xl mx-auto mt-3.5 min-h-[18px] text-[13px] font-semibold flex items-center justify-center gap-3 flex-wrap">
+  @if (presets().length) {
+    <div class="preset-row max-w-6xl mx-auto mt-2 flex items-center gap-1.5 overflow-x-auto" data-tour="presets">
+      <span class="shrink-0 text-[11px] font-bold uppercase tracking-wide text-body">Try:</span>
+      @for (preset of presets(); track preset.query) {
+        <button
+          type="button"
+          (click)="pickPreset.emit(preset.query)"
+          [title]="preset.label + ' example'"
+          [attr.aria-pressed]="isActivePreset(preset)"
+          class="preset-chip"
+          [class.preset-chip--active]="isActivePreset(preset)"
+        >
+          <span class="preset-chip__label">{{ preset.label }}</span>{{ preset.query }}
+        </button>
+      }
+    </div>
+  }
+
+  <div class="max-w-2xl mx-auto mt-1.5 min-h-[18px] text-[13px] font-semibold flex items-center justify-center gap-3 flex-wrap">
     @if (emptyQueryError()) {
       <span class="text-[#b3441f]">Type something to search for — the field is empty.</span>
     }

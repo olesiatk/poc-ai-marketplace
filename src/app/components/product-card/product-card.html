@@ -1,23 +1,57 @@
 <button
   type="button"
   (click)="onSelect()"
-  class="bg-surface px-4 py-3.5 flex gap-3.5 text-left w-full cursor-pointer border border-transparent hover:border-transparent hover:[border-image:var(--gradient-brand)_1] hover:-translate-y-0.5 transition-all"
+  (mouseenter)="hoverChange.emit(product().id)"
+  (mouseleave)="hoverChange.emit(null)"
+  (focus)="hoverChange.emit(product().id)"
+  (blur)="hoverChange.emit(null)"
+  [class.is-paired]="paired()"
+  [class.is-ai-only]="rankBadge()?.tone === 'new'"
+  [class.is-ai-tint]="aiTint()"
+  class="product-tile bg-surface flex flex-col text-left w-full h-full cursor-pointer border border-transparent hover:border-transparent hover:[border-image:var(--gradient-brand)_1] hover:-translate-y-0.5 transition-all"
 >
-  <app-icon [name]="iconName()" [size]="40" class="text-brand-dark shrink-0" />
-  <div class="flex-1 min-w-0 flex flex-col">
-    @if (matchInfo(); as info) {
-      <span class="self-start mb-1 text-[9px] font-bold uppercase tracking-wide bg-highlight text-ink px-1.5 py-0.5">
-        AI match · {{ matchCount(info) }} {{ wordFormMatches(matchCount(info)) }}
-      </span>
+  <div class="relative bg-white flex items-center justify-center p-2" [class]="compact() ? 'h-16' : 'h-32 lg:h-28'">
+    @if (imageUrl() && !imageFailed()) {
+      <img
+        [src]="imageUrl()"
+        [alt]="product().title"
+        loading="lazy"
+        decoding="async"
+        (error)="imageFailed.set(true)"
+        class="max-h-full max-w-full object-contain"
+      />
+    } @else {
+      <span class="text-xs text-body">No image</span>
     }
-    <p class="text-[10px] font-bold uppercase tracking-wide text-gradient-brand mb-0.5">{{ product().category }}</p>
-    <h3 class="text-[13px] font-extrabold uppercase leading-snug mb-1 line-clamp-2 min-h-9">{{ product().name }}</h3>
-    <p class="text-xs text-body leading-relaxed mb-2 line-clamp-2 min-h-9.75">{{ product().description }}</p>
-    <div class="flex items-center justify-between pt-2 border-t border-line mt-auto">
-      <span class="font-extrabold text-sm">{{ formatPrice(product().price) }}</span>
-      <span class="flex items-center gap-1 text-xs font-bold text-body">
+    @if (rank(); as r) {
+      <span class="rank-number absolute top-1.5 left-1.5">{{ r }}</span>
+    }
+    @if (rankBadge(); as badge) {
+      <span class="rank-badge rank-badge--{{ badge.tone }} absolute top-1.5 right-1.5" [title]="badge.title">{{ badge.text }}</span>
+    }
+  </div>
+  <div class="flex-1 min-w-0 flex flex-col" [class]="compact() ? 'px-2.5 py-2' : 'px-3 py-2.5'">
+    @if (!compact()) {
+      @if (matchInfo(); as info) {
+        <span class="self-start mb-1 text-[9px] font-bold uppercase tracking-wide bg-highlight text-ink px-1.5 py-0.5">
+          AI match · {{ matchCount(info) }} {{ wordFormMatches(matchCount(info)) }}
+        </span>
+      }
+      <p class="text-[10px] font-bold uppercase tracking-wide text-gradient-brand mb-0.5">{{ product().category }}</p>
+    }
+    <h3 class="font-extrabold leading-snug line-clamp-2" [class]="compact() ? 'text-[11px] min-h-7 mb-0.5' : 'text-xs min-h-8 mb-0.5'">
+      {{ product().title }}
+    </h3>
+    @if (reason(); as why) {
+      <p class="text-[10px] text-brand-dark font-semibold line-clamp-1 mb-1" [title]="why">{{ why }}</p>
+    } @else if (!compact()) {
+      <p class="text-[11px] text-body line-clamp-1 mb-1.5">{{ product().store }}</p>
+    }
+    <div class="flex items-center justify-between gap-2 pt-1.5 border-t border-line mt-auto">
+      <span class="font-extrabold" [class]="compact() ? 'text-xs' : 'text-sm'">{{ formatPrice(product().price) }}</span>
+      <span class="flex items-center gap-1 text-[11px] font-bold text-body whitespace-nowrap">
         <app-icon name="star" [size]="12" class="text-brand-dark" />
-        {{ avgRating() }} · {{ reviewList().length }}
+        {{ formatRating(product().averageRating) }} · {{ product().ratingCount }}
       </span>
     </div>
   </div>

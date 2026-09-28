@@ -11,7 +11,8 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "eval:search": "tsx scripts/eval-search.ts"
+    "eval:search": "tsx scripts/eval-search.ts",
+    "record:ai": "node scripts/set-env.js && tsx scripts/record-ai-snapshots.ts"
   },
   "dependencies": {
     "@angular/common": "^22.1.0",

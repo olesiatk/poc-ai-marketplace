@@ -1,8 +1,8 @@
-<section class="mx-auto max-w-6xl px-8 pt-8 pb-20" data-tour="product-grid">
-  <div class="flex items-center justify-between flex-wrap gap-3 mb-5">
+<section class="mx-auto max-w-7xl px-4 sm:px-8 pt-2 pb-12" data-tour="product-grid">
+  <div class="flex items-center justify-between flex-wrap gap-3 mb-2 min-h-7">
     <p class="eyebrow">{{ products().length }} {{ wordFormProducts(products().length) }}</p>
     @if (query()) {
-      <div class="inline-flex items-center gap-2 bg-[#fff6d9] border border-highlight-line text-[#6b5500] text-[13px] font-semibold px-3 py-1.5">
+      <div class="inline-flex items-center gap-2 bg-[#fff6d9] border border-highlight-line text-[#6b5500] text-[13px] font-semibold px-3 py-1">
         AI query: <span class="font-bold">"{{ query() }}"</span>
         <button type="button" (click)="clearQuery.emit()" aria-label="Clear query" class="text-[#6b5500] hover:text-ink">✕</button>
       </div>
@@ -17,11 +17,10 @@
   } @else if (products().length === 0) {
     <p class="text-center text-body text-sm py-16">Nothing found. Try changing your query or filters.</p>
   } @else {
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div class="grid gap-3" [style.grid-template-columns]="'repeat(' + columns() + ', minmax(0, 1fr))'">
       @for (product of visibleProducts(); track product.id) {
         <app-product-card
           [product]="product"
-          [reviewList]="reviewsFor(product.id)"
           [matchInfo]="matchFor(product.id)"
           [attr.data-tour]="$index === 0 ? 'first-product-card' : null"
           (select)="select.emit($event)"
@@ -30,7 +29,7 @@
     </div>
 
     @if (totalPages() > 1) {
-      <nav class="flex items-center justify-center flex-wrap gap-1.5 mt-10" aria-label="Pagination">
+      <nav class="flex items-center justify-center flex-wrap gap-1.5 mt-6" aria-label="Pagination">
         <button
           type="button"
           (click)="goToPage(currentPage() - 1)"

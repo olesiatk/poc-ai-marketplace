@@ -1,37 +1,45 @@
 // Retrieval-accuracy evaluation for the local (no-API-key) search heuristic.
 //
 // Runs a small hand-labeled set of queries — built from products/reviews
-// that use a *different* wording than the query (e.g. querying "cosy" for
-// products only ever described as "cozy") — against the real catalog, and
-// checks that synonym/phrase-expanded search still finds every known-good
-// match, comparing against a literal-keyword-only baseline to make the
-// recall lift from concept expansion measurable rather than anecdotal.
+// that use a *different* wording than the query (e.g. querying "hydrating"
+// for products only ever described as "moisturizing") — against the real
+// catalog, and checks that synonym/phrase-expanded search still finds every
+// known-good match, comparing against a literal-keyword-only baseline to
+// make the recall lift from concept expansion measurable rather than
+// anecdotal.
 //
-// Note on methodology: with a 300-product catalog (270 of them procedurally
-// generated, deliberately reusing this domain's vocabulary), exhaustively
-// hand-labeling *every* relevant product per query isn't practical, so this
-// grades recall of a small trusted set of known-positive ids — not
-// precision against an exhaustively-labeled set. The known positives are
-// only drawn from the 30 original hand-written products, so this remains
-// valid regardless of how the generated 270 are (re)shuffled.
+// Note on methodology: exhaustively hand-labeling *every* relevant product
+// per query in a 1000+ product catalog isn't practical, so this grades
+// recall of a small trusted set of known-positive ids — not precision
+// against an exhaustively-labeled set. Every known positive was picked by
+// hand as clearly relevant AND as never containing the literal query word,
+// so it can only be found through expansion.
+//
+// The ground truth is catalog-specific, so this always evaluates the Beauty
+// catalog (with its own concept groups), whichever dataset the app is
+// currently pointed at. If the Beauty catalog is rebuilt and an id here
+// disappears or changes wording, re-pick known positives.
 //
 // Run with: npm run eval:search
 
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
-import { localHeuristicSearch, tokenize } from "../src/app/lib/search.ts";
-import type { MatchesMap, Product, ReviewsMap } from "../src/app/models/product.model.ts";
+import { BEAUTY_DATASET } from "../src/app/datasets/beauty.ts";
+import { groupReviews } from "../src/app/lib/catalog.ts";
+import { localHeuristicSearch } from "../src/app/lib/search.ts";
+import type { MatchesMap, Product, Review, ReviewsMap } from "../src/app/models/product.model.ts";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const rootDir = join(__dirname, "..");
+const publicDir = join(__dirname, "..", "public");
 
-const products: Product[] = JSON.parse(readFileSync(join(rootDir, "public/data/products.json"), "utf8"));
-const reviews: ReviewsMap = JSON.parse(readFileSync(join(rootDir, "public/data/reviews.json"), "utf8"));
+const dataset = BEAUTY_DATASET;
+const products: Product[] = JSON.parse(readFileSync(join(publicDir, dataset.productsUrl), "utf8"));
+const reviews: ReviewsMap = groupReviews(JSON.parse(readFileSync(join(publicDir, dataset.reviewsUrl), "utf8")) as Review[]);
 
 interface EvalCase {
   query: string;
-  /** Known-good ids (from the original 30 products) that must appear in the results. */
+  /** Known-good ids that must appear in the results. */
   expectedIds: string[];
   note: string;
   /** When true, graded on set-equality with the baseline instead of recall of expectedIds. */
@@ -40,55 +48,44 @@ interface EvalCase {
 
 const EVAL_CASES: EvalCase[] = [
   {
-    query: "cosy",
-    expectedIds: ["soft-01", "soft-03", "chair-04", "bedroom-01"],
-    note: "British-spelling synonym — catalog text only ever uses \"cozy\"",
+    query: "hydrating",
+    // Maximum Moisture Cream, Vitamin C Moisturizing Face Oil, Aquaphor, Udder Balm
+    expectedIds: ["B0009ET4SG", "B0115YS3OE", "B017BGJLBE", "B072379PFP"],
+    note: "single-word synonym — none of these says \"hydrating\" (one says \"hydrate\", which stemming alone catches); the rest only \"moisturizing\"",
   },
   {
-    query: "pleasant to sit on",
-    expectedIds: ["soft-01", "soft-03", "soft-04", "soft-05", "chair-01", "chair-02", "chair-04", "bedroom-01"],
-    note: "multi-word contextual phrase (no single word of it is a concept-group member on its own) — every expected id independently contains a literal comfort-family term (comfortable/cozy/ergonomic)",
+    query: "anti-aging",
+    // Kopari eye balm, collagen sheet masks, Vitamin C face oil, Vitamin E cream
+    expectedIds: ["B07WV6JHVM", "B07Y1WFN7C", "B0115YS3OE", "B07TVFCPGP"],
+    note: "hyphenated concept term — these only mention \"wrinkles\"/\"fine lines\", never \"anti-aging\"",
   },
   {
-    query: "an expandable oak dining table",
-    expectedIds: ["table-01", "table-02", "table-04", "table-05", "bedroom-02", "bedroom-03"],
+    query: "frizzy",
+    // curl cream, smoothing conditioner, repairing hair oil serum, curl softener kit
+    expectedIds: ["B00DGXXPF0", "B012DD86DO", "B01ANJVN6M", "B00LSBK9BK"],
+    note: "parity case — these say \"frizz\"/\"anti-frizz\", never \"frizzy\", but stemming alone already bridges that, so the keyword baseline finds them too",
+  },
+  {
+    query: "unscented",
+    // Anessa sunscreen, No7 retinol night cream, Aveeno CICA ointment, sweet almond carrier oil
+    expectedIds: ["B08R8XM54F", "B09JGLT4DB", "B07KKZGQYZ", "B00PG4OX1C"],
+    note: "these say \"fragrance-free\"/\"no scent\", never \"unscented\"",
+  },
+  {
+    query: "argan oil shampoo",
+    expectedIds: ["B07W6S65ND", "B00LSBK9BK", "B07YXPL3CN"],
     note: "no concept group applies — expanded search must equal the keyword-only baseline exactly (no noise introduced)",
     expectNoExpansionDrift: true,
   },
-  {
-    query: "nursery furniture for a baby",
-    expectedIds: ["soft-03", "soft-04", "bedroom-04"],
-    note: "\"baby\" literally matches soft-03/soft-04, and pulls in \"children\" via the kids/nursery concept group to also surface bedroom-04",
-  },
-  {
-    query: "clutter-free storage",
-    expectedIds: ["storage-01", "storage-02", "storage-03", "storage-04", "storage-05", "bedroom-05"],
-    note: "\"clutter-free\" never appears literally; relies on the storage concept group",
-  },
 ];
 
-function escapeRegExp(str: string): string {
-  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
-/** Same whole-word/phrase boundary rule as the library's `containsTerm`, kept local so this baseline has no dependency on the implementation it's compared against. */
-function containsWord(blob: string, term: string): boolean {
-  const re = new RegExp(`(?<![\\p{L}\\p{N}])${escapeRegExp(term)}(?![\\p{L}\\p{N}])`, "u");
-  return re.test(blob);
-}
-
-/** A literal-keyword-only baseline (no synonym/phrase expansion), for comparison. */
+/**
+ * The keyword-only baseline — the exact same search the app's "Keyword
+ * search" column runs: same tokenizer, stemming and field weights, just
+ * with no concept groups (no synonym/phrase expansion).
+ */
 function keywordOnlySearch(query: string, items: Product[], reviewsMap: ReviewsMap): Set<string> {
-  const tokens = tokenize(query);
-  const hits = new Set<string>();
-  items.forEach((p) => {
-    const blob = [
-      p.name, p.category, p.tags.join(" "), p.material, p.room, p.style, p.description,
-      (reviewsMap[p.id] || []).map((r) => r.text).join(" "),
-    ].join(" ").toLowerCase();
-    if (tokens.some((t) => containsWord(blob, t))) hits.add(p.id);
-  });
-  return hits;
+  return idsOf(localHeuristicSearch(query, items, reviewsMap, []));
 }
 
 function idsOf(matches: MatchesMap): Set<string> {
@@ -118,7 +115,7 @@ let totalFoundExpanded = 0;
 let totalFoundBaseline = 0;
 
 for (const { query, expectedIds, note, expectNoExpansionDrift } of EVAL_CASES) {
-  const expanded = idsOf(localHeuristicSearch(query, products, reviews));
+  const expanded = idsOf(localHeuristicSearch(query, products, reviews, dataset.conceptGroups));
   const baseline = keywordOnlySearch(query, products, reviews);
 
   if (expectNoExpansionDrift) {

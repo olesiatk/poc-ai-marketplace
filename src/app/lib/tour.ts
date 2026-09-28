@@ -1,19 +1,20 @@
 import { driver, type Driver } from "driver.js";
+import { ACTIVE_DATASET } from "../datasets/active";
 import { sendScrollIntoView } from "./post-message";
 
 /**
- * A query proven to trigger both an exact match ("armchair") and a
- * synonym/concept match ("cosy" → "comfortable"/"cozy") on the same card,
- * so the live demo step shows off both highlight colors.
+ * The query the live demo runs — set per catalog in the dataset config,
+ * chosen so the top result shows both an exact match and a synonym/concept
+ * match, demonstrating both highlight colors.
  */
-export const DEMO_QUERY = "cosy armchair";
+export const DEMO_QUERY = ACTIVE_DATASET.demoQuery;
 
 export interface TourActions {
   /** Fills the search box with {@link DEMO_QUERY} and runs it for real. */
   runDemoSearch: () => Promise<void>;
-  /** Opens the top-ranked result from the just-run demo search. */
+  /** Opens the AI side's top result from the just-run demo search. */
   openFirstResult: () => void;
-  /** Clears the demo query and closes the modal, however the tour ends. */
+  /** Closes the modal and restores the default comparison, however the tour ends. */
   reset: () => void;
 }
 
@@ -49,7 +50,8 @@ function waitForLaidOutElement(selector: string, timeoutMs = 3000): Promise<void
 
 /**
  * Builds the guided tour: the first three steps introduce the static UI,
- * the last three actually run a search and open a card live, so the
+ * the rest actually run the demo search, walk through the keyword-vs-AI
+ * comparison and open the AI's top result, so the comparison and the
  * highlighted-match colors are demonstrated rather than just described.
  */
 export function createTour(actions: TourActions): Driver {
@@ -83,43 +85,50 @@ export function createTour(actions: TourActions): Driver {
         popover: {
           title: "Search with AI",
           description:
-            "Type what you're looking for in plain language — material, room, mood. Suggestions appear as you type, and the AI matches products by their attributes and customer reviews — not just exact words.",
+            "Type what you're looking for in plain language — the product, what it's for, who it's for — or pick one of the ready-made examples below the search bar.",
         },
       },
       {
         element: '[data-tour="mic-button"]',
         popover: {
           title: "Or just speak",
-          description: "No typing needed — click the mic and describe your ideal piece out loud.",
+          description: "No typing needed — click the mic and describe what you need out loud.",
         },
       },
       {
         element: '[data-tour="filters-bar"]',
         popover: {
           title: "Fine-tune with filters",
-          description:
-            "Narrow the catalog by category, room, material, or price. Filters combine with your AI search.",
+          description: "Narrow the catalog by category, brand, rating, or price. Filters apply to both searches.",
         },
       },
       {
         element: '[data-tour="search-form"]',
         popover: {
           title: "Let's try it",
-          description: `Click "Next" and we'll search for "${DEMO_QUERY}" for you, live.`,
+          description: `Click "Next" and we'll search for "${DEMO_QUERY}" for you.`,
           onNextClick: async (_element, _step, opts) => {
             await actions.runDemoSearch();
-            await waitForLaidOutElement('[data-tour="first-product-card"]');
+            await waitForLaidOutElement('[data-tour="first-ai-result"]');
             opts.driver.moveNext();
           },
         },
       },
       {
-        element: '[data-tour="first-product-card"]',
+        element: '[data-tour="comparison"]',
         waitForElement: 2000,
         popover: {
-          title: "AI matches",
+          title: "Keyword search vs AI search",
           description:
-            'Matched products are labeled and ranked by relevance. Click "Next" to open this one and see the matched words highlighted.',
+            'The same query, run two ways. Left: plain keyword search, the way most stores search. Right: AI search. "AI only" marks products keyword search missed; arrows show how AI re-ranked the rest.',
+        },
+      },
+      {
+        element: '[data-tour="first-ai-result"]',
+        waitForElement: 2000,
+        popover: {
+          title: "AI's top pick",
+          description: 'Click "Next" to open it and see why it matched.',
           onNextClick: async (_element, _step, opts) => {
             actions.openFirstResult();
             await waitForLaidOutElement('[data-tour="product-modal"]');

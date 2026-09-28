@@ -1,49 +1,53 @@
-import { CONCEPT_GROUPS } from "./synonyms";
+import { ACTIVE_DATASET } from "../datasets/active";
+import { tokenize } from "./search";
+import type { ConceptGroups } from "./synonyms";
 import type { Product } from "../models/product.model";
 
 /** Shown as clickable prompts when the search box is focused and still empty. */
-export const EXAMPLE_QUERIES: readonly string[] = [
-  "ergonomic office chair with back support",
-  "spacious sofa for a big family",
-  "modern minimalist wooden table",
-];
+export const EXAMPLE_QUERIES: readonly string[] = ACTIVE_DATASET.presetQueries.map((p) => p.query);
 
-// The first term of each concept group stands in for the whole group
-// (e.g. "comfortable" for the comfort/cosy/ergonomic family) — enough to
-// suggest a search direction without flooding the list with every synonym.
-const CONCEPT_HEADWORDS: readonly string[] = CONCEPT_GROUPS.map((group) => group[0]);
+// A title word has to recur across at least this many products to be
+// offered as a completion — keeps one-off model numbers and brand-specific
+// jargon out of the list.
+const MIN_TITLE_WORD_PRODUCTS = 3;
 
 export interface SearchVocabulary {
-  /** Full pool (tags, attributes, every synonym) used to complete a word that's still being typed. */
+  /** Full pool (common title words, categories, brands, every synonym) used to complete a word that's still being typed. */
   terms: string[];
   /** A smaller, curated pool (categories + one headword per concept) suggested once a word is finished. */
   nextWordTerms: string[];
 }
 
-function splitAttr(value: string, separator: RegExp): string[] {
-  return value.split(separator).map((s) => s.trim().toLowerCase()).filter(Boolean);
-}
-
 /** Builds the suggestion vocabulary from the live catalog plus the synonym dictionary. */
-export function buildVocabulary(products: Product[]): SearchVocabulary {
+export function buildVocabulary(
+  products: Product[],
+  groups: ConceptGroups = ACTIVE_DATASET.conceptGroups
+): SearchVocabulary {
   const terms = new Set<string>();
   const categories = new Set<string>();
+  const titleWordProducts = new Map<string, number>();
 
-  products.forEach((p) => {
+  for (const p of products) {
     const category = p.category.toLowerCase();
     categories.add(category);
     terms.add(category);
-    p.tags.forEach((t) => terms.add(t.toLowerCase()));
-    splitAttr(p.material, /[,()]/).forEach((t) => terms.add(t));
-    splitAttr(p.room, /,/).forEach((t) => terms.add(t));
-    terms.add(p.style.toLowerCase());
-  });
+    terms.add(p.store.toLowerCase());
+    for (const word of new Set(tokenize(p.title))) {
+      if (/\d/.test(word)) continue;
+      titleWordProducts.set(word, (titleWordProducts.get(word) ?? 0) + 1);
+    }
+  }
+  titleWordProducts.forEach((count, word) => count >= MIN_TITLE_WORD_PRODUCTS && terms.add(word));
+  groups.forEach((group) => group.forEach((t) => terms.add(t)));
 
-  CONCEPT_GROUPS.forEach((group) => group.forEach((t) => terms.add(t)));
+  // The first term of each concept group stands in for the whole group
+  // (e.g. "moisturizing" for the hydrating/nourishing family) — enough to
+  // suggest a search direction without flooding the list with every synonym.
+  const headwords = groups.map((group) => group[0]);
 
   return {
     terms: [...terms].sort((a, b) => a.length - b.length || a.localeCompare(b)),
-    nextWordTerms: [...new Set([...categories, ...CONCEPT_HEADWORDS])].sort((a, b) => a.localeCompare(b)),
+    nextWordTerms: [...new Set([...categories, ...headwords])].sort((a, b) => a.localeCompare(b)),
   };
 }
 
