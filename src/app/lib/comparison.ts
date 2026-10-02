@@ -2,7 +2,7 @@ import type { MatchInfo } from "../models/product.model";
 
 /**
  * How a product moved between the keyword-search list and the AI list.
- * "new" = keyword search didn't return it at all (it's an "AI only" find).
+ * "new" = keyword search didn't return it at all (it's a "Found only by AI" find).
  */
 export type RankChange = { kind: "new" } | { kind: "up" | "down"; by: number } | { kind: "same" };
 

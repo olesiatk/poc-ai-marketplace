@@ -1,0 +1,68 @@
+<div class="relative">
+  <span [id]="id() + '-label'" class="block text-[10px] font-bold uppercase tracking-wide mb-1">Rating</span>
+
+  <button
+    [id]="id()"
+    type="button"
+    aria-haspopup="listbox"
+    [attr.aria-expanded]="isOpen()"
+    [attr.aria-controls]="id() + '-listbox'"
+    [attr.aria-labelledby]="id() + '-label ' + id()"
+    [attr.aria-activedescendant]="isOpen() ? id() + '-opt-' + active() : null"
+    (click)="toggle()"
+    (blur)="close()"
+    (keydown)="onKeydown($event)"
+    class="relative w-full h-[34px] pl-2.5 pr-8 flex items-center gap-1.5 border bg-white text-[13px] text-ink text-left outline-none focus-visible:outline-2 focus-visible:outline-brand-dark focus-visible:outline-offset-1"
+    [class]="isOpen() ? 'border-brand-dark' : 'border-ink'"
+  >
+    @if (selected().rating) {
+      <app-icon name="star" [size]="14" class="text-brand-dark" />
+      <span><b>{{ selected().rating.toFixed(1) }}</b> &amp; up</span>
+      <span class="sr-only">— {{ selected().ariaLabel }}</span>
+    } @else {
+      <span>Any rating</span>
+    }
+    <span class="absolute right-2.5 top-1/2 -translate-y-1/2 flex pointer-events-none">
+      <app-icon name="chevron-down" [size]="14" />
+    </span>
+  </button>
+
+  @if (isOpen()) {
+    <ul
+      [id]="id() + '-listbox'"
+      role="listbox"
+      [attr.aria-labelledby]="id() + '-label'"
+      class="absolute top-full left-0 right-0 mt-1 bg-white shadow-xl z-20"
+    >
+      @for (opt of options; track opt.rating; let i = $index) {
+        <li
+          [id]="id() + '-opt-' + i"
+          role="option"
+          [attr.aria-selected]="opt.rating === selected().rating"
+          [attr.aria-label]="opt.ariaLabel"
+          (mousedown)="$event.preventDefault()"
+          (click)="pick(opt.rating)"
+          (mouseenter)="active.set(i)"
+          class="flex items-center gap-2 px-3 py-2 text-[13px] cursor-pointer transition-colors"
+          [class.bg-surface]="active() === i"
+          [class.font-bold]="opt.rating === selected().rating"
+          [class.rating-option--selected]="opt.rating === selected().rating"
+        >
+          @if (opt.rating) {
+            <span class="flex gap-px" aria-hidden="true">
+              @for (fill of opt.stars; track $index) {
+                <span class="rating-star rating-star--{{ fill }}">
+                  <app-icon name="star" [size]="14" />
+                  @if (fill === "half") {
+                    <span class="rating-star__half"><app-icon name="star" [size]="14" /></span>
+                  }
+                </span>
+              }
+            </span>
+          }
+          <span>{{ opt.label }}</span>
+        </li>
+      }
+    </ul>
+  }
+</div>

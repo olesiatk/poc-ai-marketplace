@@ -86,7 +86,7 @@
   </form>
 
   @if (presets().length) {
-    <div class="preset-row max-w-6xl mx-auto mt-2 flex items-center gap-1.5 overflow-x-auto" data-tour="presets">
+    <div class="preset-row max-w-6xl mx-auto mt-2 flex items-center gap-1.5 overflow-x-auto sm:flex-wrap sm:overflow-visible" data-tour="presets">
       <span class="shrink-0 text-[11px] font-bold uppercase tracking-wide text-body">Try:</span>
       @for (preset of presets(); track preset.query) {
         <button

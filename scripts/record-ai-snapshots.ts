@@ -71,6 +71,11 @@ async function main(): Promise<void> {
           .map(([id, info]) => ({ id, score: info.score, directTerms: [...info.directTerms], synonymTerms: [...info.synonymTerms] }));
         console.log(`✓ "${query}" — ${result.matches.size} matches`);
         recorded = true;
+      } else if (result.error?.includes("tokens per day")) {
+        // The daily budget only frees up gradually over 24 hours — retrying
+        // a minute later just burns what little is left, so stop here.
+        console.error(`✗ "${query}" — Groq's daily token limit is used up. Try again in a few hours.`);
+        process.exit(1);
       } else {
         console.log(`… "${query}" — attempt ${attempt} fell back to local (${result.error?.slice(0, 80) ?? "no error"}), retrying`);
         await sleep(PACE_MS);

@@ -49,13 +49,16 @@ export interface MatchInfo {
   directTerms: Set<string>;
   /** Synonyms/contextual phrases pulled in via concept expansion — highlighted in light green. */
   synonymTerms: Set<string>;
+  /** Local search only: the product contains every word of the query (not just some). */
+  matchesAllWords?: boolean;
 }
 
 export type MatchesMap = Map<string, MatchInfo>;
 
 export interface Filters {
   category: string;
-  brand: string;
+  /** One of {@link FilterOptions.itemForms}; "" = any. */
+  itemForm: string;
   maxPrice: number;
   /** 0 = any rating. */
   minRating: number;
@@ -63,7 +66,7 @@ export interface Filters {
 
 export interface FilterOptions {
   categories: string[];
-  brands: string[];
+  itemForms: string[];
 }
 
 /** "recorded" = a stored real LLM run for a preset query (see lib/ai-results.ts). */

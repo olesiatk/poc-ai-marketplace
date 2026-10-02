@@ -27,14 +27,16 @@ export const BEAUTY_DATASET: DatasetConfig = {
     ["gentle", "sensitive skin", "mild", "soothing", "non-irritating", "hypoallergenic", "calming"],
     ["organic", "plant-based", "vegan", "paraben-free", "cruelty-free", "chemical-free"],
     ["anti-aging", "anti-wrinkle", "wrinkles", "fine lines", "firming", "youthful"],
-    ["acne", "breakouts", "pimples", "blemishes", "clear skin", "oily skin"],
+    ["acne", "breakouts", "pimples", "zits", "blemishes", "clear skin", "oily skin"],
     ["long-lasting", "long lasting", "all day", "waterproof", "smudge-proof", "stays on"],
     ["scent", "smell", "fragrance", "aroma", "smells good", "smells amazing"],
     ["unscented", "fragrance-free", "no scent"],
+    ["cologne", "perfume", "eau de toilette", "eau de parfum", "men's fragrance"],
     ["shine", "shiny", "glossy", "lustrous", "healthy hair"],
     ["frizz", "frizzy", "anti-frizz", "smooth hair", "sleek"],
     ["curly", "curls", "wavy", "waves", "coils"],
     ["volume", "volumizing", "thicker", "fuller", "thick hair"],
+    ["thinning hair", "thinning", "thin hair", "hair loss", "hair growth", "regrowth", "thickening"],
     ["damaged hair", "split ends", "breakage", "repair", "strengthening"],
     ["travel", "travel size", "portable", "compact", "on the go"],
     ["affordable", "cheap", "inexpensive", "great price", "worth the money", "good value"],
@@ -49,13 +51,25 @@ export const BEAUTY_DATASET: DatasetConfig = {
   ],
 
   presetQueries: [
-    { query: "unscented", label: "Synonyms" },
-    { query: "hydrating face cream", label: "Synonyms" },
+    // Checked against this catalog before picking. The first few are wording
+    // the catalog itself barely uses ("honeymoon", "sunkissed", "hangnails",
+    // "rosacea" — 0-5 keyword hits), so AI finds more products than keyword
+    // search does. The rest have a visibly wrong answer on the keyword side
+    // (perfumes for "without fragrance", red clay for "red lipstick", SPF 4
+    // tanning oil for "SPF 30+") — and two carry a price the slider picks up.
+    // The last leans on customer reviews ("gave it to my mom for her birthday,
+    // she loved it") more than on product descriptions.
+    { query: "honeymoon getaway", label: "Occasion" },
+    { query: "sunkissed", label: "Glow" },
+    { query: "hangnails", label: "Problem" },
+    { query: "rosacea", label: "Skin concern" },
     { query: "shampoo without fragrance", label: "Negation" },
-    { query: "gift set under $25", label: "Budget" },
+    { query: "red lipstick", label: "Color" },
+    { query: "sunscreen SPF 30+ under $15", label: "Numbers" },
+    { query: "cologne for men under $20", label: "Budget" },
     { query: "my hair gets frizzy in humid weather", label: "Intent" },
-    { query: "maybelline mascara", label: "Exact name" },
+    { query: "birthday gift my mom will love", label: "Reviews" },
   ],
   searchPlaceholder: 'e.g. "a hydrating serum for dry skin"',
-  demoQuery: "hydrating face cream",
+  demoQuery: "red lipstick",
 };

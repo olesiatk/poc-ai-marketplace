@@ -1,4 +1,5 @@
 import { ACTIVE_DATASET } from "../datasets/active";
+import { parsePriceQuery } from "./price-query";
 import { stem } from "./stem";
 import { expandConcepts, type ConceptGroups } from "./synonyms";
 import type { MatchesMap, Product, ReviewsMap } from "../models/product.model";
@@ -9,13 +10,18 @@ const STOPWORDS = new Set([
   "the", "a", "an", "and", "or", "but", "that", "this", "these", "those",
   "in", "on", "at", "to", "from", "by", "with", "without", "about", "into",
   "my", "your", "our", "their", "his", "its", "some", "any", "very", "really",
-  "please", "would", "like", "something", "someone", "just", "can", "could",
+  "please", "would", "will", "like", "something", "someone", "just", "can", "could",
 ]);
 
 export function tokenize(text: string): string[] {
   return (text.toLowerCase().match(/[a-z0-9']+/gi) || []).filter(
     (t) => t.length >= 3 && !STOPWORDS.has(t)
   );
+}
+
+/** Distinct words in the query (by stem, price mentions left out) — what "matches all words" is measured against. */
+export function countQueryWords(query: string): number {
+  return new Set(tokenize(parsePriceQuery(query).text).map(stem)).size;
 }
 
 export interface ExpandedQuery {
@@ -32,11 +38,13 @@ export interface ExpandedQuery {
 /**
  * Expands a raw query into its literal tokens plus any related synonyms and
  * contextual phrases from the catalog's concept groups, so matching isn't
- * limited to exact lexical strings.
+ * limited to exact lexical strings. Price mentions ("under $20") are left
+ * out — they're a filter, not words to find in product text.
  */
 export function expandQueryTerms(query: string, groups: ConceptGroups = ACTIVE_DATASET.conceptGroups): ExpandedQuery {
-  const tokens = tokenize(query);
-  const expansions = expandConcepts(new Set(tokens), query.toLowerCase(), groups);
+  const { text } = parsePriceQuery(query);
+  const tokens = tokenize(text);
+  const expansions = expandConcepts(new Set(tokens), text.toLowerCase(), groups);
   return { tokens, expansions: [...expansions] };
 }
 
@@ -162,12 +170,15 @@ export function localHeuristicSearch(
   // A synonym that stems to the same thing as a literal query word adds nothing new.
   const directStems = new Set(matchers.filter((m) => !m.isSynonym).map((m) => m.stem));
   const effective = matchers.filter((m) => !m.isSynonym || m.stem === null || !directStems.has(m.stem));
+  const wordKey = (m: TermMatcher) => m.stem ?? m.phrase!;
+  const queryWordCount = new Set(effective.filter((m) => !m.isSynonym).map(wordKey)).size;
 
   for (const product of products) {
     const index = productIndex(product, reviews);
     let score = 0;
     const directTerms = new Set<string>();
     const synonymTerms = new Set<string>();
+    const wordsHit = new Set<string>();
 
     for (const matcher of effective) {
       let hit = false;
@@ -180,10 +191,13 @@ export function localHeuristicSearch(
       if (hit) {
         const target = matcher.isSynonym ? synonymTerms : directTerms;
         highlightForms(matcher, index).forEach((form) => target.add(form));
+        if (!matcher.isSynonym) wordsHit.add(wordKey(matcher));
       }
     }
 
-    if (score > 0) matches.set(product.id, { score, directTerms, synonymTerms });
+    if (score > 0) {
+      matches.set(product.id, { score, directTerms, synonymTerms, matchesAllWords: wordsHit.size === queryWordCount });
+    }
   }
 
   return matches;

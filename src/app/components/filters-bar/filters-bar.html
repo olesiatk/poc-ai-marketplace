@@ -1,7 +1,7 @@
 <section class="mx-auto max-w-7xl px-4 sm:px-8 pt-1 pb-1" data-tour="filters-bar">
   <div class="bg-surface px-4 py-3 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-x-4 gap-y-3 items-end">
     <app-filter-select
-      id="f-category"
+      [id]="'f-category'"
       label="Category"
       [value]="filters().category"
       [options]="options().categories"
@@ -9,21 +9,14 @@
       (valueChange)="onSelectChange('category', $event)"
     />
     <app-filter-select
-      id="f-brand"
-      label="Brand"
-      [value]="filters().brand"
-      [options]="options().brands"
-      placeholder="All brands"
-      (valueChange)="onSelectChange('brand', $event)"
+      [id]="'f-item-form'"
+      label="Item form"
+      [value]="filters().itemForm"
+      [options]="options().itemForms"
+      placeholder="All forms"
+      (valueChange)="onSelectChange('itemForm', $event)"
     />
-    <app-filter-select
-      id="f-rating"
-      label="Rating"
-      [value]="ratingLabel()"
-      [options]="ratingOptions"
-      placeholder="Any"
-      (valueChange)="onRatingChange($event)"
-    />
+    <app-rating-select [id]="'f-rating'" [value]="filters().minRating" (valueChange)="onRatingChange($event)" />
     <div>
       <label for="f-price" class="block text-[10px] font-bold uppercase tracking-wide mb-1">Max price, $</label>
       <input

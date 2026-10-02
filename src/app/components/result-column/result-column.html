@@ -3,7 +3,7 @@
     <p class="text-[12px] font-extrabold uppercase tracking-wide" [class.text-gradient-brand]="side() === 'ai'">
       {{ heading() }}
       <span class="font-bold normal-case tracking-normal" [class]="side() === 'ai' ? 'text-brand-dark' : 'text-body'">
-        · {{ loading() ? "…" : products().length }} {{ loading() ? "" : wordFormProducts(products().length) }}
+        · {{ loading() ? "…" : countText() }}
       </span>
     </p>
     <p class="text-[10px] text-body leading-tight">{{ subheading() }}</p>
@@ -21,40 +21,22 @@
 } @else if (products().length === 0) {
   <p class="bg-surface text-center text-body text-xs px-4 py-10">{{ emptyText() }}</p>
 } @else {
-  @if (layout() === "cards") {
-    <div class="grid gap-2" [style.grid-template-columns]="'repeat(' + cardsPerRow() + ', minmax(0, 1fr))'">
-      @for (item of visible(); track item.product.id) {
-        <app-product-card
-          [product]="item.product"
-          [compact]="true"
-          [aiTint]="side() === 'ai'"
-          [rank]="item.rank"
-          [rankChange]="changeFor(item.product.id)"
-          [reason]="reasonFor(item.product.id)"
-          [paired]="hoveredId() === item.product.id"
-          [attr.data-tour]="tourTarget() && $index === 0 ? tourTarget() : null"
-          (select)="select.emit($event)"
-          (hoverChange)="hoverChange.emit($event)"
-        />
-      }
-    </div>
-  } @else {
-    <div class="flex flex-col gap-1.5">
-      @for (item of visible(); track item.product.id) {
-        <app-product-row
-          [product]="item.product"
-          [aiTint]="side() === 'ai'"
-          [rank]="item.rank"
-          [rankChange]="changeFor(item.product.id)"
-          [reason]="reasonFor(item.product.id)"
-          [paired]="hoveredId() === item.product.id"
-          [attr.data-tour]="tourTarget() && $index === 0 ? tourTarget() : null"
-          (select)="select.emit($event)"
-          (hoverChange)="hoverChange.emit($event)"
-        />
-      }
-    </div>
-  }
+  <div class="grid gap-2" [style.grid-template-columns]="'repeat(' + columns() + ', minmax(0, 1fr))'">
+    @for (item of visible(); track item.product.id) {
+      <app-product-row
+        [product]="item.product"
+        [aiTint]="side() === 'ai'"
+        [rank]="item.rank"
+        [rankChange]="changeFor(item.product.id)"
+        [dimmed]="isDimmed(item.product.id)"
+        [reason]="reasonFor(item.product.id)"
+        [paired]="hoveredId() === item.product.id"
+        [attr.data-tour]="tourTarget() && $index === 0 ? tourTarget() : null"
+        (select)="select.emit($event)"
+        (hoverChange)="hoverChange.emit($event)"
+      />
+    }
+  </div>
 
   @if (totalPages() > 1) {
     <nav class="flex items-center justify-center gap-2 mt-2.5" [attr.aria-label]="heading() + ' pages'">

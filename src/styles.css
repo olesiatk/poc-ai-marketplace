@@ -300,7 +300,7 @@ input[type="range"] {
   font-weight: 700;
 }
 
-/* How an AI result moved vs. keyword search: "AI only" / ↑N / ↓N / =. */
+/* How an AI result moved vs. keyword search: "Found only by AI" / ↑N / ↓N / =. */
 .rank-badge {
   height: 20px;
   padding: 0 6px;
@@ -329,6 +329,44 @@ input[type="range"] {
 /* An AI-only find: a gradient rule down its left edge. */
 .is-ai-only {
   box-shadow: inset 3px 0 0 0 var(--color-brand);
+}
+
+/* A keyword result the AI side left out: faded, with a "Filtered out by AI" tag, so the noise in the keyword list shows at a glance. */
+.rank-badge--off {
+  background: #fff;
+  color: var(--color-body);
+  border: 1px solid var(--color-line);
+  text-transform: uppercase;
+}
+.is-dimmed :is(img, h3, .rank-number, .dim-target) {
+  opacity: 0.4;
+  transition: opacity 150ms;
+}
+.is-dimmed:is(:hover, :focus-visible) :is(img, h3, .rank-number, .dim-target) {
+  opacity: 1;
+}
+
+/* Rating filter (RatingSelectComponent): a star row per option — filled stars in
+   brand green like the cards, empty ones light gray, a half star as a filled star
+   clipped to its left half over an empty one. */
+.rating-star {
+  position: relative;
+  display: inline-flex;
+  color: #c9cac6;
+}
+.rating-star--full {
+  color: var(--color-brand-dark);
+}
+.rating-star__half {
+  position: absolute;
+  inset: 0;
+  width: 50%;
+  overflow: hidden;
+  display: flex;
+  color: var(--color-brand-dark);
+}
+.rating-option--selected {
+  box-shadow: inset 3px 0 0 0 var(--color-brand-dark);
 }
 
 /* The same product, hovered in the other comparison column. */
@@ -371,7 +409,7 @@ input[type="range"] {
   background-image: var(--gradient-brand);
   color: #fff;
 }
-/* One row of chips that scrolls sideways instead of wrapping into a second row. */
+/* Chips wrap onto more rows from 640px up; on phones, one row that scrolls sideways instead of a tall stack. */
 .preset-row {
   scrollbar-width: none;
   justify-content: safe center;

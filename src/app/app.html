@@ -32,6 +32,8 @@
           [keywordMatches]="keywordMatches()"
           [aiMatches]="aiMatches()"
           [rankChanges]="rankChanges()"
+          [queryWordCount]="queryWordCount()"
+          [keywordAllWordsCount]="keywordAllWordsCount()"
           [aiLoading]="isSearching()"
           [aiNote]="aiNote()"
           (select)="onSelect($event.id, $event.side)"

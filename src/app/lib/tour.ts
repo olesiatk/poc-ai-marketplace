@@ -99,7 +99,7 @@ export function createTour(actions: TourActions): Driver {
         element: '[data-tour="filters-bar"]',
         popover: {
           title: "Fine-tune with filters",
-          description: "Narrow the catalog by category, brand, rating, or price. Filters apply to both searches.",
+          description: "Narrow the catalog by category, item form, rating, or price. Filters apply to both searches.",
         },
       },
       {
@@ -120,7 +120,7 @@ export function createTour(actions: TourActions): Driver {
         popover: {
           title: "Keyword search vs AI search",
           description:
-            'The same query, run two ways. Left: plain keyword search, the way most stores search. Right: AI search. "AI only" marks products keyword search missed; arrows show how AI re-ranked the rest.',
+            'The same query, run two ways. Left: plain keyword search, the way most stores search. Right: AI search. "Found only by AI" marks products keyword search missed, "Filtered out by AI" fades the keyword results AI left out, and arrows show how AI re-ranked the rest.',
         },
       },
       {

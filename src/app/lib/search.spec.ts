@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { expandQueryTerms, highlightHtml, localHeuristicSearch, tokenize } from "./search";
+import { countQueryWords, expandQueryTerms, highlightHtml, localHeuristicSearch, tokenize } from "./search";
 import type { Product, Review, ReviewsMap } from "../models/product.model";
 
 // Fixed test groups rather than the active dataset's — keeps these specs
@@ -46,6 +46,11 @@ describe("expandQueryTerms", () => {
   it("keeps the literal tokens untouched", () => {
     const { tokens } = expandQueryTerms("a hydrating face cream", GROUPS);
     expect(tokens).toEqual(["hydrating", "face", "cream"]);
+  });
+
+  it("leaves price mentions out — they're a filter, not words to match", () => {
+    const { tokens } = expandQueryTerms("face cream under $20 for dry skin", GROUPS);
+    expect(tokens).toEqual(["face", "cream", "dry", "skin"]);
   });
 
   it("expands a single-word concept to its synonyms and contextual phrases", () => {
@@ -155,6 +160,29 @@ describe("localHeuristicSearch — stemming", () => {
     const fragranceFree = makeProduct({ id: "p-ff", title: "Fragrance-Free Lotion" });
     expect(localHeuristicSearch("unscented", [fragranceFree], reviews, []).size).toBe(0);
     expect(localHeuristicSearch("unscented", [fragranceFree], reviews, [["unscented", "fragrance-free"]]).has("p-ff")).toBe(true);
+  });
+});
+
+describe("localHeuristicSearch — any word vs. all words", () => {
+  const reviews: ReviewsMap = {};
+  const faceCream = makeProduct({ id: "p-cream", title: "Hydrating Face Cream" });
+  const handCream = makeProduct({ id: "p-hand", title: "Hand Cream" });
+
+  it("matches a product with any query word, flagging the ones with all of them", () => {
+    const matches = localHeuristicSearch("hydrating face creams", [faceCream, handCream], reviews, []);
+    expect(matches.get("p-cream")?.matchesAllWords).toBe(true);
+    expect(matches.get("p-hand")?.matchesAllWords).toBe(false);
+  });
+
+  it("doesn't count a synonym hit as one of the query's words", () => {
+    const moisturizing = makeProduct({ id: "p-moist", title: "Moisturizing Face Cream" });
+    const matches = localHeuristicSearch("hydrating face cream", [moisturizing], reviews, GROUPS);
+    expect(matches.get("p-moist")?.matchesAllWords).toBe(false);
+  });
+
+  it("counts distinct query words by stem, leaving out stopwords and prices", () => {
+    expect(countQueryWords("cream creams for my face under $20")).toBe(2);
+    expect(countQueryWords("unscented")).toBe(1);
   });
 });
 

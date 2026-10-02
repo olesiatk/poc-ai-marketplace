@@ -11,18 +11,19 @@ import {
 } from "./components/search-comparison/search-comparison";
 import { ACTIVE_DATASET } from "./datasets/active";
 import { AiResults, type AiResult, type AiSnapshotFile } from "./lib/ai-results";
-import { groupReviews } from "./lib/catalog";
+import { groupReviews, itemFormOptions, itemForms } from "./lib/catalog";
 import { missedByKeyword, rankChanges } from "./lib/comparison";
 import { formatDate } from "./lib/format";
 import { aiSearch, isGroqConfigured } from "./lib/groq";
 import { watchIframeHeight } from "./lib/iframe-resize";
 import { isEmbedded, listenToHost, sendFrameReady, sendTourStatus } from "./lib/post-message";
-import { localHeuristicSearch, wordFormProducts } from "./lib/search";
+import { parsePriceQuery } from "./lib/price-query";
+import { countQueryWords, localHeuristicSearch, wordFormProducts } from "./lib/search";
 import { buildVocabulary } from "./lib/suggestions";
 import { DEMO_QUERY, createTour } from "./lib/tour";
 import type { Filters, MatchesMap, Product, Review, ReviewsMap } from "./models/product.model";
 
-const EMPTY_FILTERS: Filters = { category: "", brand: "", maxPrice: Infinity, minRating: 0 };
+const EMPTY_FILTERS: Filters = { category: "", itemForm: "", maxPrice: Infinity, minRating: 0 };
 const NO_MATCHES: MatchesMap = new Map();
 
 /** The query shown on first load — the catalog's first preset, served from the recording. */
@@ -70,6 +71,9 @@ export class App implements OnDestroy {
   private aiResults: AiResults | null = null;
   // Guards against a slow AI response for an older query overwriting a newer one.
   private searchSeq = 0;
+  // True while the price slider sits where a query's budget ("under $20") put
+  // it — so the next query without a budget puts it back. Dragging it clears this.
+  private maxPriceFromQuery = false;
 
   protected readonly priceLimit = computed(() => {
     const list = this.products();
@@ -82,7 +86,7 @@ export class App implements OnDestroy {
     const list = this.products();
     return {
       categories: uniqueSorted(list.map((p) => p.category)),
-      brands: uniqueSorted(list.map((p) => p.store)),
+      itemForms: itemFormOptions(list),
     };
   });
 
@@ -92,7 +96,7 @@ export class App implements OnDestroy {
     return this.products().filter(
       (p) =>
         (!filters.category || p.category === filters.category) &&
-        (!filters.brand || p.store === filters.brand) &&
+        (!filters.itemForm || itemForms(p).includes(filters.itemForm)) &&
         p.price <= filters.maxPrice &&
         p.averageRating >= filters.minRating
     );
@@ -118,6 +122,12 @@ export class App implements OnDestroy {
   private readonly keywordIds = computed(() => this.keywordProducts().map((p) => p.id));
   private readonly aiIds = computed(() => this.aiProducts().map((p) => p.id));
   protected readonly rankChanges = computed(() => rankChanges(this.keywordIds(), this.aiIds()));
+  protected readonly queryWordCount = computed(() => countQueryWords(this.query()));
+  /** Keyword results that contain every query word — usually a small share of the "any word" total. */
+  protected readonly keywordAllWordsCount = computed(() => {
+    const matches = this.keywordMatches();
+    return this.keywordProducts().filter((p) => matches.get(p.id)?.matchesAllWords).length;
+  });
   protected readonly missedCount = computed(() => missedByKeyword(this.keywordIds(), this.aiIds()));
 
   protected readonly aiNote = computed(() => {
@@ -138,8 +148,15 @@ export class App implements OnDestroy {
     if (missed > 0) return `AI found ${missed} ${wordFormProducts(missed)} keyword search missed.`;
     if (aiCount === 0) return "AI found nothing relevant for this query. Try rephrasing it.";
     // Nothing new, but a much shorter list — the win here is cutting the noise.
-    if (aiCount < keywordCount) return `AI narrowed ${keywordCount} keyword results down to the ${aiCount} relevant ones.`;
-    return "AI found no extra products for this query — it only re-ranked what keyword search found.";
+    // Say what the keyword count really is, so the bigger number doesn't read as the better search.
+    if (aiCount < keywordCount) {
+      const found =
+        this.queryWordCount() > 1
+          ? `${keywordCount} products with any of your words (${this.keywordAllWordsCount()} with all of them)`
+          : `${keywordCount} products with your word`;
+      return `Keyword search returned ${found} — AI kept the ${aiCount} that actually fit.`;
+    }
+    return "Both searches agree — AI just put the best ones first.";
   });
 
   protected readonly selectedProduct = computed(() => {
@@ -209,12 +226,31 @@ export class App implements OnDestroy {
   }
 
   protected onFilterChange(event: FilterChangeEvent): void {
+    if (event.field === "maxPrice") this.maxPriceFromQuery = false;
     this.filters.update((f) => ({ ...f, [event.field]: event.value }));
   }
 
   protected onResetFilters(): void {
+    this.maxPriceFromQuery = false;
     this.filters.set({ ...EMPTY_FILTERS, maxPrice: this.priceLimit() });
     this.onClearQuery();
+  }
+
+  /** Moves the price slider to the query's budget, or back to the top if the previous query had set it. */
+  private applyQueryPrice(query: string): void {
+    const { maxPrice } = parsePriceQuery(query);
+    if (maxPrice !== null) {
+      this.maxPriceFromQuery = true;
+      this.filters.update((f) => ({ ...f, maxPrice: Math.min(maxPrice, this.priceLimit()) }));
+    } else {
+      this.releaseQueryPrice();
+    }
+  }
+
+  private releaseQueryPrice(): void {
+    if (!this.maxPriceFromQuery) return;
+    this.maxPriceFromQuery = false;
+    this.filters.update((f) => ({ ...f, maxPrice: this.priceLimit() }));
   }
 
   /** Fills the search box with `query` and runs it — for preset chips, first load and the tour. */
@@ -226,6 +262,7 @@ export class App implements OnDestroy {
   protected async onSearch(rawQuery: string): Promise<void> {
     const trimmed = rawQuery.trim();
     const seq = ++this.searchSeq;
+    this.applyQueryPrice(trimmed);
     this.query.set(trimmed);
     this.aiResult.set(null);
     if (!trimmed || !this.aiResults) {
@@ -242,6 +279,7 @@ export class App implements OnDestroy {
 
   protected onClearQuery(): void {
     this.searchSeq++;
+    this.releaseQueryPrice();
     this.searchValue.set("");
     this.query.set("");
     this.aiResult.set(null);

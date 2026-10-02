@@ -1,5 +1,6 @@
-import { Component, computed, input, output } from "@angular/core";
+import { Component, input, output } from "@angular/core";
 import { FilterSelectComponent } from "../filter-select/filter-select";
+import { RatingSelectComponent } from "../rating-select/rating-select";
 import { formatPrice } from "../../lib/format";
 import type { FilterOptions, Filters } from "../../models/product.model";
 
@@ -8,17 +9,9 @@ export interface FilterChangeEvent {
   value: string | number;
 }
 
-/** Minimum-rating choices, as shown in the dropdown → the rating they filter by. */
-const RATING_OPTIONS: ReadonlyMap<string, number> = new Map([
-  ["4.5 & up", 4.5],
-  ["4 & up", 4],
-  ["3.5 & up", 3.5],
-  ["3 & up", 3],
-]);
-
 @Component({
   selector: "app-filters-bar",
-  imports: [FilterSelectComponent],
+  imports: [FilterSelectComponent, RatingSelectComponent],
   templateUrl: "./filters-bar.html",
 })
 export class FiltersBarComponent {
@@ -30,19 +23,12 @@ export class FiltersBarComponent {
   readonly reset = output<void>();
 
   protected readonly formatPrice = formatPrice;
-  protected readonly ratingOptions = [...RATING_OPTIONS.keys()];
-
-  protected readonly ratingLabel = computed(() => {
-    const min = this.filters().minRating;
-    return [...RATING_OPTIONS].find(([, value]) => value === min)?.[0] ?? "";
-  });
-
-  protected onSelectChange(field: "category" | "brand", value: string): void {
+  protected onSelectChange(field: "category" | "itemForm", value: string): void {
     this.filterChange.emit({ field, value });
   }
 
-  protected onRatingChange(label: string): void {
-    this.filterChange.emit({ field: "minRating", value: RATING_OPTIONS.get(label) ?? 0 });
+  protected onRatingChange(rating: number): void {
+    this.filterChange.emit({ field: "minRating", value: rating });
   }
 
   protected onPriceChange(event: Event): void {
