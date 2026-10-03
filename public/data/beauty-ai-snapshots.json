@@ -1,316 +1,37 @@
 {
-  "recordedAt": "2026-10-02T11:29:28.042Z",
+  "recordedAt": "2026-10-03T20:01:33.703Z",
   "model": "openai/gpt-oss-20b",
   "queries": {
-    "kissable pout": [
-      {
-        "id": "B09NYH844B",
-        "score": 78,
-        "directTerms": [],
-        "synonymTerms": [
-          "metallic glitter",
-          "long lasting",
-          "waterproof"
-        ]
-      },
-      {
-        "id": "B09NYDH5BQ",
-        "score": 78,
-        "directTerms": [],
-        "synonymTerms": [
-          "metallic glitter",
-          "long lasting",
-          "waterproof"
-        ]
-      },
-      {
-        "id": "B09DF955L7",
-        "score": 72,
-        "directTerms": [],
-        "synonymTerms": [
-          "nourish",
-          "shea",
-          "long lasting"
-        ]
-      },
-      {
-        "id": "B09LQ7F5F1",
-        "score": 70,
-        "directTerms": [],
-        "synonymTerms": [
-          "hydrating",
-          "long lasting",
-          "waterproof"
-        ]
-      },
-      {
-        "id": "B09LPZBRM1",
-        "score": 70,
-        "directTerms": [],
-        "synonymTerms": [
-          "hydrating",
-          "long lasting",
-          "waterproof"
-        ]
-      },
-      {
-        "id": "B0BVQQ58G8",
-        "score": 68,
-        "directTerms": [],
-        "synonymTerms": [
-          "smudge proof",
-          "waterproof",
-          "long lasting"
-        ]
-      },
-      {
-        "id": "B0BHF63MVP",
-        "score": 65,
-        "directTerms": [],
-        "synonymTerms": [
-          "scented",
-          "wand applicator",
-          "lip gloss"
-        ]
-      },
-      {
-        "id": "B00TBXUXPO",
-        "score": 60,
-        "directTerms": [],
-        "synonymTerms": [
-          "matte",
-          "long lasting",
-          "high payoff"
-        ]
-      }
-    ],
-    "sunkissed": [
-      {
-        "id": "B09RMHB4TZ",
-        "score": 95,
-        "directTerms": [],
-        "synonymTerms": [
-          "wash off tan mousse",
-          "instant sunless tan"
-        ]
-      },
-      {
-        "id": "B07SQB13BY",
-        "score": 90,
-        "directTerms": [],
-        "synonymTerms": [
-          "sunscreen tanning oil",
-          "deep dark luxurious tan"
-        ]
-      },
-      {
-        "id": "B07DTMKTRN",
-        "score": 88,
-        "directTerms": [],
-        "synonymTerms": [
-          "tanning bed lotion",
-          "white dha bronzer"
-        ]
-      },
-      {
-        "id": "B09Q3X5YWR",
-        "score": 85,
-        "directTerms": [],
-        "synonymTerms": [
-          "highlighter & contour palette",
-          "glow"
-        ]
-      },
-      {
-        "id": "B07KRRQFVV",
-        "score": 80,
-        "directTerms": [],
-        "synonymTerms": [
-          "advanced ultra-dark 200x",
-          "beach black bronzer"
-        ]
-      },
-      {
-        "id": "B00IKRKUPA",
-        "score": 78,
-        "directTerms": [],
-        "synonymTerms": [
-          "glide & glow highlighter",
-          "glowing radiance"
-        ]
-      },
-      {
-        "id": "B01IDQJMMO",
-        "score": 75,
-        "directTerms": [],
-        "synonymTerms": [
-          "self tanning applicator mitt",
-          "smooth"
-        ]
-      },
-      {
-        "id": "B01GUXUMZ8",
-        "score": 72,
-        "directTerms": [],
-        "synonymTerms": [
-          "dark bronze self tanner mousse",
-          "resort style"
-        ]
-      }
-    ],
-    "poreless": [
-      {
-        "id": "B015M2C68E",
-        "score": 92,
-        "directTerms": [],
-        "synonymTerms": [
-          "blackhead remover",
-          "dermatologist",
-          "pore"
-        ]
-      },
-      {
-        "id": "B0C7WQK2QW",
-        "score": 88,
-        "directTerms": [],
-        "synonymTerms": [
-          "clay mask",
-          "exfoliate dead skin",
-          "pore"
-        ]
-      },
-      {
-        "id": "B00GX1RFEY",
-        "score": 80,
-        "directTerms": [],
-        "synonymTerms": [
-          "cleanser",
-          "alcohol-free",
-          "pore"
-        ]
-      },
-      {
-        "id": "B07GTF72XC",
-        "score": 78,
-        "directTerms": [],
-        "synonymTerms": [
-          "exfoliating lemon slices",
-          "brightening",
-          "pore"
-        ]
-      },
-      {
-        "id": "B07SQB13BY",
-        "score": 70,
-        "directTerms": [],
-        "synonymTerms": [
-          "sunscreen",
-          "spf 4",
-          "pore"
-        ]
-      }
-    ],
-    "airbrushed": [
-      {
-        "id": "B00B7RFSH0",
-        "score": 95,
-        "directTerms": [
-          "airbrush"
-        ],
-        "synonymTerms": [
-          "water-based foundation"
-        ]
-      }
-    ],
     "honeymoon getaway": [
       {
-        "id": "B07GVSPYM3",
+        "id": "B000NM7HME",
         "score": 95,
-        "directTerms": [],
+        "directTerms": [
+          "honeymoon"
+        ],
         "synonymTerms": [
-          "romantic",
-          "personal spa",
-          "aromatherapy"
+          "maui rain",
+          "honeymoon cruise"
         ]
       },
       {
-        "id": "B08MFRRTVC",
-        "score": 90,
-        "directTerms": [],
-        "synonymTerms": [
-          "trio set",
-          "eau de parfum",
-          "body lotion"
-        ]
-      },
-      {
-        "id": "B00H3WGN9K",
-        "score": 88,
-        "directTerms": [],
-        "synonymTerms": [
-          "gift set",
-          "soap",
-          "elegant packaging"
-        ]
-      },
-      {
-        "id": "B07BHM7WM2",
+        "id": "B09TZWY42G",
         "score": 85,
+        "directTerms": [],
+        "synonymTerms": [
+          "bath lily",
+          "full body bathtub pillow",
+          "relaxation"
+        ]
+      },
+      {
+        "id": "B08ZLC989Y",
+        "score": 70,
         "directTerms": [],
         "synonymTerms": [
           "body scrub",
-          "coconut milk",
-          "exfoliating"
-        ]
-      },
-      {
-        "id": "B08DJ8RK2L",
-        "score": 80,
-        "directTerms": [],
-        "synonymTerms": [
-          "fragrance",
-          "body oil",
-          "alcohol-free"
-        ]
-      },
-      {
-        "id": "B0948L4Y2R",
-        "score": 78,
-        "directTerms": [],
-        "synonymTerms": [
-          "fragrance",
-          "body oil",
-          "alcohol-free"
-        ]
-      },
-      {
-        "id": "B08P3T6RDT",
-        "score": 75,
-        "directTerms": [],
-        "synonymTerms": [
-          "hand spray",
-          "value pack",
-          "fragrance"
-        ]
-      },
-      {
-        "id": "B09QV6D983",
-        "score": 70,
-        "directTerms": [],
-        "synonymTerms": [
-          "hand cream",
-          "gift set",
-          "hydrating"
-        ]
-      },
-      {
-        "id": "B08M5D5B31",
-        "score": 68,
-        "directTerms": [],
-        "synonymTerms": [
-          "hand lotion",
-          "dry hands",
-          "non-greasy"
+          "spa",
+          "smooth skin"
         ]
       },
       {
@@ -321,6 +42,184 @@
           "body oil",
           "aromatherapy",
           "massage"
+        ]
+      },
+      {
+        "id": "B00IL5IHCY",
+        "score": 60,
+        "directTerms": [],
+        "synonymTerms": [
+          "replenishing creme",
+          "hydrating",
+          "soft skin"
+        ]
+      }
+    ],
+    "sunkissed": [
+      {
+        "id": "B00GDJTN3M",
+        "score": 95,
+        "directTerms": [],
+        "synonymTerms": [
+          "coconut beach fragrance",
+          "tanning lotion"
+        ]
+      },
+      {
+        "id": "B07KRRQFVV",
+        "score": 90,
+        "directTerms": [],
+        "synonymTerms": [
+          "beach black bronzer",
+          "tanning lotion"
+        ]
+      },
+      {
+        "id": "B07DTMKTRN",
+        "score": 88,
+        "directTerms": [],
+        "synonymTerms": [
+          "white dha bronzers",
+          "tanning lotion"
+        ]
+      },
+      {
+        "id": "B0BQL9CMBM",
+        "score": 85,
+        "directTerms": [],
+        "synonymTerms": [
+          "self tanner",
+          "face & body"
+        ]
+      },
+      {
+        "id": "B001JTF3TY",
+        "score": 83,
+        "directTerms": [],
+        "synonymTerms": [
+          "tanning accelerator",
+          "anti-oxidants"
+        ]
+      },
+      {
+        "id": "B09CWBJYZB",
+        "score": 80,
+        "directTerms": [],
+        "synonymTerms": [
+          "coconut kisses",
+          "tanning lotion"
+        ]
+      },
+      {
+        "id": "B00C9J08MU",
+        "score": 78,
+        "directTerms": [],
+        "synonymTerms": [
+          "dark bronze self-tanner",
+          "mousse"
+        ]
+      },
+      {
+        "id": "B01GUXUMZ8",
+        "score": 75,
+        "directTerms": [],
+        "synonymTerms": [
+          "sunscreen and tanning lotion set",
+          "beach"
+        ]
+      }
+    ],
+    "hangnails": [
+      {
+        "id": "B01KW17CC0",
+        "score": 95,
+        "directTerms": [
+          "hangnails"
+        ],
+        "synonymTerms": [
+          "cuticle",
+          "dry",
+          "cracked"
+        ]
+      },
+      {
+        "id": "B0C2ML31KL",
+        "score": 90,
+        "directTerms": [],
+        "synonymTerms": [
+          "cuticle",
+          "remover",
+          "softener"
+        ]
+      },
+      {
+        "id": "B09DTL3RX4",
+        "score": 85,
+        "directTerms": [],
+        "synonymTerms": [
+          "cuticle",
+          "repair",
+          "natural"
+        ]
+      }
+    ],
+    "rosacea": [
+      {
+        "id": "B00SGJJIYQ",
+        "score": 95,
+        "directTerms": [
+          "rosacea"
+        ],
+        "synonymTerms": [
+          "soothing",
+          "works great for rosacea"
+        ]
+      },
+      {
+        "id": "B00GF3ZEMK",
+        "score": 85,
+        "directTerms": [],
+        "synonymTerms": [
+          "very calming for the skin",
+          "sensitive"
+        ]
+      },
+      {
+        "id": "B0B3RG8129",
+        "score": 80,
+        "directTerms": [],
+        "synonymTerms": [
+          "calming serum",
+          "calms redness"
+        ]
+      },
+      {
+        "id": "B07345Z2WV",
+        "score": 80,
+        "directTerms": [
+          "rosacea"
+        ],
+        "synonymTerms": [
+          "moisturizing and rosacea",
+          "sunburns"
+        ]
+      },
+      {
+        "id": "B07891C9PQ",
+        "score": 75,
+        "directTerms": [],
+        "synonymTerms": [
+          "helps with acne and redness",
+          "redness"
+        ]
+      },
+      {
+        "id": "B07968N5GC",
+        "score": 70,
+        "directTerms": [],
+        "synonymTerms": [
+          "soothing hydrating aloe vera gel",
+          "very sensitive skin"
         ]
       }
     ],
@@ -339,6 +238,18 @@
         ]
       },
       {
+        "id": "B07ZJWKN47",
+        "score": 92,
+        "directTerms": [
+          "shampoo",
+          "shampoos"
+        ],
+        "synonymTerms": [
+          "unscented",
+          "paraben free"
+        ]
+      },
+      {
         "id": "B01HYN6G4Y",
         "score": 90,
         "directTerms": [
@@ -348,12 +259,12 @@
         ],
         "synonymTerms": [
           "unscented",
-          "baby shampoo"
+          "fragrance free"
         ]
       },
       {
         "id": "B07YBW9KTX",
-        "score": 85,
+        "score": 88,
         "directTerms": [
           "shampoo",
           "shampoos",
@@ -361,8 +272,8 @@
           "fragrance"
         ],
         "synonymTerms": [
-          "no parabens",
-          "fragrences"
+          "no fragrances",
+          "all natural"
         ]
       }
     ],
@@ -378,92 +289,24 @@
         ],
         "synonymTerms": [
           "blood red",
-          "matte",
-          "waterproof"
-        ]
-      },
-      {
-        "id": "B09NYDH5BQ",
-        "score": 90,
-        "directTerms": [
-          "lipstick",
-          "lipsticks"
-        ],
-        "synonymTerms": [
-          "metallic",
-          "shimmer"
-        ]
-      },
-      {
-        "id": "B09NYD16C9",
-        "score": 88,
-        "directTerms": [
-          "lipstick",
-          "lipsticks"
-        ],
-        "synonymTerms": [
-          "metallic",
-          "shimmer"
-        ]
-      },
-      {
-        "id": "B09NYH844B",
-        "score": 85,
-        "directTerms": [
-          "lipstick",
-          "lipsticks"
-        ],
-        "synonymTerms": [
-          "metallic",
-          "shimmer"
+          "matte waterproof"
         ]
       },
       {
         "id": "B0BVQQ58G8",
-        "score": 80,
+        "score": 90,
         "directTerms": [
           "red",
           "lipstick"
         ],
         "synonymTerms": [
-          "metallic",
+          "berried metallic lip",
           "long lasting"
         ]
       },
       {
-        "id": "B09DF955L7",
-        "score": 78,
-        "directTerms": [
-          "lipstick"
-        ],
-        "synonymTerms": [
-          "wine",
-          "waterproof"
-        ]
-      },
-      {
-        "id": "B07Y3VCTKL",
-        "score": 75,
-        "directTerms": [
-          "lipstick"
-        ],
-        "synonymTerms": [
-          "cherry"
-        ]
-      },
-      {
-        "id": "B07Y5NWDBD",
-        "score": 70,
-        "directTerms": [],
-        "synonymTerms": [
-          "black",
-          "kohl",
-          "liner"
-        ]
-      },
-      {
         "id": "B07B3X1LDS",
-        "score": 65,
+        "score": 88,
         "directTerms": [
           "red",
           "reds",
@@ -471,40 +314,143 @@
           "lipsticks"
         ],
         "synonymTerms": [
-          "velour",
-          "mini"
+          "red & pink",
+          "velour liquid"
         ]
       },
       {
-        "id": "B07FW9XPDD",
-        "score": 60,
+        "id": "B07DZ1Y5TN",
+        "score": 85,
         "directTerms": [
-          "red"
+          "red",
+          "lipstick"
         ],
         "synonymTerms": [
-          "brown",
-          "eyeliner"
+          "cherry wet",
+          "velour liquid"
+        ]
+      },
+      {
+        "id": "B018WCSZZ4",
+        "score": 80,
+        "directTerms": [
+          "red",
+          "lipstick"
+        ],
+        "synonymTerms": [
+          "orange red",
+          "vivid matte"
+        ]
+      }
+    ],
+    "sunscreen spf 30+ under $15": [
+      {
+        "id": "B07DN61V6D",
+        "score": 100,
+        "directTerms": [
+          "sunscreen",
+          "sunscreens",
+          "spf"
+        ],
+        "synonymTerms": [
+          "spf 50",
+          "broad spectrum uva/uvb protection",
+          "non-greasy"
+        ]
+      },
+      {
+        "id": "B07SY9YCD5",
+        "score": 100,
+        "directTerms": [
+          "sunscreen",
+          "spf"
+        ],
+        "synonymTerms": [
+          "spf 30",
+          "broad spectrum uva/uvb protection",
+          "non-greasy"
+        ]
+      },
+      {
+        "id": "B084ZHP45Y",
+        "score": 90,
+        "directTerms": [
+          "sunscreen",
+          "spf"
+        ],
+        "synonymTerms": [
+          "spf 50",
+          "water resistant",
+          "clear sunscreen"
+        ]
+      },
+      {
+        "id": "B09H61PN51",
+        "score": 80,
+        "directTerms": [
+          "sunscreen",
+          "spf"
+        ],
+        "synonymTerms": [
+          "spf 40",
+          "anti-blue light technology"
+        ]
+      }
+    ],
+    "cologne for men under $20": [
+      {
+        "id": "B08P5JFGF9",
+        "score": 95,
+        "directTerms": [
+          "cologne",
+          "men"
+        ],
+        "synonymTerms": [
+          "meta-bosem blue for men ultra",
+          "eau de toilette spray for men"
+        ]
+      },
+      {
+        "id": "B004Z7RMNW",
+        "score": 92,
+        "directTerms": [
+          "colognes",
+          "cologne",
+          "men"
+        ],
+        "synonymTerms": [
+          "preferred fragrance men's akthar noir",
+          "eau de toilette spray"
+        ]
+      },
+      {
+        "id": "B06Y3X3TX4",
+        "score": 90,
+        "directTerms": [
+          "cologne",
+          "men"
+        ],
+        "synonymTerms": [
+          "g for men",
+          "le male by jean paul gaultier cologne"
+        ]
+      },
+      {
+        "id": "B006QZO05O",
+        "score": 88,
+        "directTerms": [
+          "men"
+        ],
+        "synonymTerms": [
+          "creation lamis deluxe cuban glory",
+          "eau de toilette for men"
         ]
       }
     ],
     "my hair gets frizzy in humid weather": [
       {
-        "id": "B072KBVZTJ",
-        "score": 95,
-        "directTerms": [
-          "hair",
-          "frizz",
-          "frizzy"
-        ],
-        "synonymTerms": [
-          "frizz-removing conditioner",
-          "light formula",
-          "moisturize your hair"
-        ]
-      },
-      {
         "id": "B07G375Q36",
-        "score": 92,
+        "score": 95,
         "directTerms": [
           "hair",
           "get",
@@ -513,14 +459,25 @@
           "frizzy"
         ],
         "synonymTerms": [
-          "humidity resistant",
-          "hair spray",
-          "long-lasting volume"
+          "humidity resistant"
+        ]
+      },
+      {
+        "id": "B072KBVZTJ",
+        "score": 90,
+        "directTerms": [
+          "hair",
+          "frizz",
+          "frizzy"
+        ],
+        "synonymTerms": [
+          "frizz-removing",
+          "conditioner"
         ]
       },
       {
         "id": "B00KQW9ZKI",
-        "score": 90,
+        "score": 85,
         "directTerms": [
           "hair",
           "get",
@@ -531,93 +488,85 @@
         ],
         "synonymTerms": [
           "argan oil",
-          "hair moisturizer",
-          "anti aging"
+          "moisturizer"
         ]
       },
       {
-        "id": "B07M93CSCJ",
-        "score": 88,
+        "id": "B003L8V8R2",
+        "score": 80,
         "directTerms": [
           "hair",
+          "get",
+          "frizz"
+        ],
+        "synonymTerms": [
+          "frizz-free",
+          "ionic"
+        ]
+      },
+      {
+        "id": "B019GBG0IE",
+        "score": 78,
+        "directTerms": [
+          "hair",
+          "get",
+          "getting",
+          "gets",
           "frizz",
           "frizzy"
         ],
         "synonymTerms": [
-          "frizz-removing conditioner",
-          "light formula",
-          "vegan"
+          "diffuser"
         ]
       },
       {
-        "id": "B00DGXXPF0",
-        "score": 85,
+        "id": "B09563M2QR",
+        "score": 75,
+        "directTerms": [
+          "hair",
+          "getting",
+          "get",
+          "frizz"
+        ],
+        "synonymTerms": [
+          "negative ions"
+        ]
+      },
+      {
+        "id": "B0941YDPSW",
+        "score": 70,
         "directTerms": [
           "hair",
           "get",
+          "getting",
+          "frizzy",
+          "frizz"
+        ],
+        "synonymTerms": [
+          "humidity",
+          "messy"
+        ]
+      },
+      {
+        "id": "B0128TCKJO",
+        "score": 68,
+        "directTerms": [
+          "hair",
+          "hairs",
+          "get",
+          "getting",
           "frizz",
+          "frizzy",
           "frizzies"
         ],
         "synonymTerms": [
-          "curl cream",
-          "enhancer",
-          "define curls"
+          "frizz straight",
+          "coarse"
         ]
       },
       {
-        "id": "B07D77LZ9B",
-        "score": 83,
-        "directTerms": [
-          "hair"
-        ],
-        "synonymTerms": [
-          "weightless moisture",
-          "frizz control",
-          "bio-active"
-        ]
-      },
-      {
-        "id": "B07GLC13Y9",
-        "score": 80,
-        "directTerms": [
-          "hair",
-          "frizz"
-        ],
-        "synonymTerms": [
-          "regenerative masque",
-          "dry hair",
-          "strengthen"
-        ]
-      },
-      {
-        "id": "B07YXPL3CN",
-        "score": 78,
-        "directTerms": [
-          "hair"
-        ],
-        "synonymTerms": [
-          "hair treatment mask",
-          "keratin",
-          "fine hair"
-        ]
-      },
-      {
-        "id": "B07PR8RRL5",
-        "score": 75,
-        "directTerms": [
-          "hair",
-          "get",
-          "frizz"
-        ],
-        "synonymTerms": [
-          "detangling brush",
-          "fragrance free",
-          "natural detangler"
-        ]
-      },
-      {
-        "id": "B00DPNKBOE",
-        "score": 73,
+        "id": "B01ANJVN6M",
+        "score": 65,
         "directTerms": [
           "hair",
           "get",
@@ -625,292 +574,154 @@
           "frizz"
         ],
         "synonymTerms": [
-          "castor oil conditioner",
-          "moisturize",
-          "all hair types"
+          "dryness",
+          "shine"
         ]
       },
       {
-        "id": "B07ZJWKN47",
-        "score": 70,
-        "directTerms": [
-          "hair",
-          "get"
-        ],
-        "synonymTerms": [
-          "pro pure foam shampoo",
-          "volumized hair",
-          "paraben free"
-        ]
-      },
-      {
-        "id": "B07ZJW4428",
-        "score": 68,
+        "id": "B00T5GD1TC",
+        "score": 60,
         "directTerms": [
           "hair",
           "get",
           "getting",
-          "weather"
+          "frizz",
+          "frizzy",
+          "humid"
         ],
         "synonymTerms": [
-          "scalp serum",
-          "dry scalp",
-          "soothe"
+          "glaze"
         ]
       }
     ],
-    "cologne for men under $20": [
+    "birthday gift my mom will love": [
       {
-        "id": "B08P5JFGF9",
+        "id": "B00H3WGN9K",
+        "score": 98,
+        "directTerms": [
+          "birthday",
+          "gift",
+          "gifts",
+          "moms",
+          "love"
+        ],
+        "synonymTerms": [
+          "gift boxed",
+          "ready to give",
+          "thoughtful gift for moms"
+        ]
+      },
+      {
+        "id": "B07GVSPYM3",
         "score": 92,
         "directTerms": [
-          "cologne",
-          "men"
+          "birthday",
+          "gift",
+          "love"
         ],
         "synonymTerms": [
-          "eau de toilette"
+          "best wedding, anniversary, birthday or graduation gift",
+          "relaxes both body and mind"
         ]
       },
       {
-        "id": "B004Z7RMNW",
+        "id": "B078LNDDRD",
         "score": 90,
         "directTerms": [
-          "colognes",
-          "cologne",
-          "men"
+          "birthday",
+          "gift",
+          "gifts",
+          "mom",
+          "love"
         ],
         "synonymTerms": [
-          "eau de toilette"
+          "bath bombs",
+          "all natural indulgence"
         ]
       },
       {
-        "id": "B0BK9R3Z6F",
+        "id": "B09QV6D983",
         "score": 88,
         "directTerms": [
-          "cologne",
-          "men"
+          "gift",
+          "gifts",
+          "love"
         ],
         "synonymTerms": [
-          "baby scented",
-          "fragrance"
+          "hand cream gift set",
+          "hydration and softness"
         ]
       },
       {
-        "id": "B006QZO05O",
-        "score": 87,
-        "directTerms": [
-          "men"
-        ],
-        "synonymTerms": [
-          "eau de toilette"
-        ]
-      },
-      {
-        "id": "B06Y3X3TX4",
+        "id": "B09TZDYW52",
         "score": 85,
         "directTerms": [
-          "cologne",
-          "men"
+          "birthday",
+          "gift",
+          "gifts",
+          "mom",
+          "love"
         ],
         "synonymTerms": [
-          "eau de toilette"
+          "handmade natural rose petals soap",
+          "gift set"
         ]
       },
       {
-        "id": "B08PT8BZNL",
+        "id": "B00TRE33AY",
         "score": 80,
         "directTerms": [
-          "men"
+          "birthday",
+          "gift",
+          "mom",
+          "love"
         ],
         "synonymTerms": [
-          "body oil"
+          "rose blossom boxed soap set",
+          "gift set"
         ]
       },
       {
-        "id": "B06Y4G5D68",
+        "id": "B072HL27NW",
         "score": 78,
-        "directTerms": [],
+        "directTerms": [
+          "gift",
+          "love"
+        ],
         "synonymTerms": [
-          "eau de parfum"
+          "patchouli & buriti lotion & bar soap set",
+          "best body lotion"
         ]
       },
       {
-        "id": "B08837YCG6",
+        "id": "B0716F1XMD",
         "score": 75,
         "directTerms": [],
         "synonymTerms": [
-          "women",
-          "eau de parfum"
+          "almond glow coconut body lotion",
+          "skin care"
         ]
       },
       {
-        "id": "B094GF33B3",
-        "score": 72,
-        "directTerms": [],
-        "synonymTerms": [
-          "body oil",
-          "women"
-        ]
-      },
-      {
-        "id": "B07VLPNKWD",
-        "score": 70,
+        "id": "B09PF8XDQ4",
+        "score": 73,
         "directTerms": [
-          "cologne"
+          "gift"
         ],
         "synonymTerms": [
-          "women",
-          "eau de parfum"
+          "moisturizing shea butter shower gel & body lotion set"
         ]
       },
       {
-        "id": "B074MFST5F",
+        "id": "B095BQKYP3",
         "score": 70,
         "directTerms": [
-          "men"
+          "gift",
+          "love"
         ],
         "synonymTerms": [
-          "body oil",
-          "women"
-        ]
-      },
-      {
-        "id": "B01LXF84TH",
-        "score": 70,
-        "directTerms": [
-          "cologne"
-        ],
-        "synonymTerms": [
-          "women",
-          "body spray"
-        ]
-      },
-      {
-        "id": "B01I54JJB8",
-        "score": 70,
-        "directTerms": [],
-        "synonymTerms": [
-          "women",
-          "parfum de toilette"
-        ]
-      },
-      {
-        "id": "B00YE966A6",
-        "score": 70,
-        "directTerms": [
-          "cologne"
-        ],
-        "synonymTerms": [
-          "body oil"
-        ]
-      },
-      {
-        "id": "B00YE9LOLC",
-        "score": 70,
-        "directTerms": [],
-        "synonymTerms": [
-          "leather"
-        ]
-      },
-      {
-        "id": "B0073G75U2",
-        "score": 68,
-        "directTerms": [],
-        "synonymTerms": [
-          "women",
-          "eau de toilette"
-        ]
-      },
-      {
-        "id": "B0753W8871",
-        "score": 68,
-        "directTerms": [],
-        "synonymTerms": [
-          "body oil",
-          "women"
-        ]
-      },
-      {
-        "id": "B071ZNG5GQ",
-        "score": 68,
-        "directTerms": [],
-        "synonymTerms": [
-          "impression perfume"
-        ]
-      },
-      {
-        "id": "B01BNHLX3G",
-        "score": 68,
-        "directTerms": [],
-        "synonymTerms": [
-          "women",
-          "eau de parfum"
-        ]
-      },
-      {
-        "id": "B005ET2QA4",
-        "score": 65,
-        "directTerms": [],
-        "synonymTerms": [
-          "talc",
-          "women"
-        ]
-      },
-      {
-        "id": "B08P3T6RDT",
-        "score": 65,
-        "directTerms": [
-          "cologne",
-          "mens"
-        ],
-        "synonymTerms": [
-          "hand spray",
-          "women"
-        ]
-      },
-      {
-        "id": "B073ZPYXX1",
-        "score": 65,
-        "directTerms": [],
-        "synonymTerms": [
-          "women",
-          "fragrance"
-        ]
-      },
-      {
-        "id": "B00YECBTQE",
-        "score": 65,
-        "directTerms": [],
-        "synonymTerms": [
-          "coconut lemongrass",
-          "fragrance"
-        ]
-      },
-      {
-        "id": "B00ZP6MTMG",
-        "score": 65,
-        "directTerms": [],
-        "synonymTerms": [
-          "cherry blossom",
-          "fragrance"
-        ]
-      },
-      {
-        "id": "B0914JBBTV",
-        "score": 60,
-        "directTerms": [],
-        "synonymTerms": [
-          "moisturizing",
-          "jelly"
-        ]
-      },
-      {
-        "id": "B00GDJTN3M",
-        "score": 60,
-        "directTerms": [],
-        "synonymTerms": [
-          "bronzer",
-          "tanning lotion"
+          "gua sha tool",
+          "massage tools"
         ]
       }
     ]
