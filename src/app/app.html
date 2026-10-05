@@ -21,6 +21,7 @@
         [options]="filterOptions()"
         [filters]="filters()"
         [priceLimit]="priceLimit()"
+        [fromQuery]="filtersFromQuery()"
         (filterChange)="onFilterChange($event)"
         (reset)="onResetFilters()"
       />

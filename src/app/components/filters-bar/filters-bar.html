@@ -3,22 +3,29 @@
     <app-filter-select
       [id]="'f-category'"
       label="Category"
-      [value]="filters().category"
+      [value]="filters().categories"
       [options]="options().categories"
       placeholder="All categories"
-      (valueChange)="onSelectChange('category', $event)"
+      [fromQuery]="fromQuery().has('categories')"
+      (valueChange)="onSelectChange('categories', $event)"
     />
     <app-filter-select
       [id]="'f-item-form'"
       label="Item form"
-      [value]="filters().itemForm"
+      [value]="filters().itemForms"
       [options]="options().itemForms"
       placeholder="All forms"
-      (valueChange)="onSelectChange('itemForm', $event)"
+      [fromQuery]="fromQuery().has('itemForms')"
+      (valueChange)="onSelectChange('itemForms', $event)"
     />
     <app-rating-select [id]="'f-rating'" [value]="filters().minRating" (valueChange)="onRatingChange($event)" />
     <div>
-      <label for="f-price" class="block text-[10px] font-bold uppercase tracking-wide mb-1">Max price, $</label>
+      <label for="f-price" class="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide mb-1">
+        Max price, $
+        @if (fromQuery().has("maxPrice")) {
+          <span class="query-tag">from your query</span>
+        }
+      </label>
       <input
         id="f-price"
         type="range"

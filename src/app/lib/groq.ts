@@ -1,6 +1,6 @@
 import { environment } from "../../environments/environment";
 import { ACTIVE_DATASET } from "../datasets/active";
-import { parsePriceQuery } from "./price-query";
+import { passesQueryFilters, queryFiltersFor } from "./query-filters";
 import {
   MAX_PLAN_TERMS,
   RICH_CANDIDATES,
@@ -50,7 +50,7 @@ Return ONLY valid JSON (no explanations, no markdown) in this exact shape:
 {"categories": ["<category>"], "terms": ["<word or phrase>"]}
 Rules:
 - "categories": every category from the list where a product that fits the query could plausibly be — usually 1-3. Copy the names exactly. Use [] if the query could fit almost any category.
-- "terms": 5-${MAX_PLAN_TERMS} lowercase words or short phrases that the title, description or reviews of a fitting product would likely contain: synonyms, the standard name for slang, product types, key ingredients and attributes. Never include something the query asks to avoid (for "without fragrance", never "fragrance").`;
+- "terms": 5-${MAX_PLAN_TERMS} lowercase words or short phrases that the title, description or reviews of a fitting product would likely contain: synonyms, the standard name for slang, product types, key ingredients and attributes. When the query says who it's for (a brother, dad, wife, kids), include words that products made for them use ("men", "for him", "beard" for a brother). Never include something the query asks to avoid (for "without fragrance", never "fragrance").`;
 
 const RERANK_PROMPT = `You are a semantic search engine for a ${domain}.
 You are given a user's query (typed or transcribed from speech) and a product catalog: products grouped under "## Category" headers, one per line as "<number> | <title> | <brand> | $<price>", the best-ranked ones followed by indented lines of features (F:), description (D:) and customer reviews (R:).
@@ -67,7 +67,7 @@ Return ONLY valid JSON (no explanations, no markdown) in this exact shape:
 {"matches": [{"id": <product number>, "score": <0-100 relevance>, "keywords": ["<word-or-phrase-1>", "<word-or-phrase-2>"]}]}
 Rules:
 - "keywords" must be words or short phrases that appear VERBATIM in that product's title, features, description, or reviews, and that justify why it's relevant — including synonyms and contextual phrases you matched, not only the user's literal query words. 2-4 keywords per product.
-- Include EVERY product in the catalog that fits the query, not just the best few: a close fit scores 80-100, a partial fit that still serves the shopper's goal 60-79. Leave out any product that contradicts any part of the query (a women's perfume for "for men", an eyeliner for "lipstick", a scented product for "without fragrance"). Sort by descending score.
+- Include EVERY product in the catalog that fits the query, not just the best few: a close fit scores 80-100, a partial fit that still serves the shopper's goal 60-79. Leave out any product that contradicts any part of the query (a women's perfume for "for men", a kids' or women's product as a gift for a brother, an eyeliner for "lipstick", a scented product for "without fragrance"). Sort by descending score.
 - If no product satisfies every part of the query, still return the closest matches with lower scores (e.g. 30-60) rather than an empty list — but never a product that contradicts it.
 - If nothing is relevant, return {"matches": []}.
 - Never invent products or numbers that aren't in the catalog.`;
@@ -143,20 +143,24 @@ export async function aiSearch(query: string, products: Product[], reviews: Revi
   }
 
   try {
-    // A budget in the query ("under $20") is a hard filter: only products
-    // that fit it are candidates, so every slot goes to an affordable one.
-    const { maxPrice } = parsePriceQuery(query);
-    const affordable = maxPrice === null ? products : products.filter((p) => p.price <= maxPrice);
-    const plan = await planQuery(query, affordable);
-    const candidates = selectCandidates(query, affordable, reviews, plan);
-    const catalog = buildCatalog(candidates, reviews, expandQueryTerms(query, []).tokens, plan?.terms ?? []);
+    // Filters the query names ("under $20", "cream form", "category skin
+    // care") are hard filters: only products that pass them are candidates,
+    // so every slot goes to one that can show up. Their words are a filter,
+    // not something to search product text for — local retrieval and the
+    // highlights use the rest; the model still reads the whole query.
+    const filters = queryFiltersFor(query, products);
+    const searchText = filters.text;
+    const pool = products.filter((p) => passesQueryFilters(p, filters));
+    const plan = await planQuery(query, pool);
+    const candidates = selectCandidates(searchText, pool, reviews, plan);
+    const catalog = buildCatalog(candidates, reviews, expandQueryTerms(searchText, []).tokens, plan?.terms ?? []);
 
     // Room for gpt-oss's low-effort reasoning plus the JSON answer (~300 together seen at most).
     const answer = await groqJson(RERANK_PROMPT, `Query: ${query}\n\n${catalog.text}`, 900);
     const rawMatches = dropWeakMatches(parseMatches(answer).map((m) => ({ ...m, score: Number(m.score) || 0 })));
 
     // Where the query's own words occur in each candidate, for exact-match highlighting.
-    const literal = localHeuristicSearch(query, candidates, reviews, []);
+    const literal = localHeuristicSearch(searchText, candidates, reviews, []);
     const matches: MatchesMap = new Map();
     rawMatches.forEach((raw) => {
       // The model answers with catalog line numbers; anything else isn't a candidate.
@@ -166,7 +170,7 @@ export async function aiSearch(query: string, products: Product[], reviews: Revi
       const keywords = Array.isArray(m.keywords) ? m.keywords : [];
       const cleanedKeywords = keywords.map((k) => String(k).toLowerCase().trim()).filter(Boolean);
       // The model isn't asked to tag each keyword, so classify post-hoc.
-      const { directTerms, synonymTerms } = classifyKeywords(query, cleanedKeywords, literal.get(m.id)?.directTerms ?? new Set());
+      const { directTerms, synonymTerms } = classifyKeywords(searchText, cleanedKeywords, literal.get(m.id)?.directTerms ?? new Set());
       matches.set(m.id, { score: m.score, directTerms, synonymTerms });
     });
 

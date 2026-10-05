@@ -6,7 +6,7 @@ import type { FilterOptions, Filters } from "../../models/product.model";
 
 export interface FilterChangeEvent {
   field: keyof Filters;
-  value: string | number;
+  value: string[] | number;
 }
 
 @Component({
@@ -18,12 +18,14 @@ export class FiltersBarComponent {
   readonly options = input.required<FilterOptions>();
   readonly filters = input.required<Filters>();
   readonly priceLimit = input.required<number>();
+  /** Filters the search query set by itself, tagged "from your query". */
+  readonly fromQuery = input<ReadonlySet<string>>(new Set());
 
   readonly filterChange = output<FilterChangeEvent>();
   readonly reset = output<void>();
 
   protected readonly formatPrice = formatPrice;
-  protected onSelectChange(field: "category" | "itemForm", value: string): void {
+  protected onSelectChange(field: "categories" | "itemForms", value: string[]): void {
     this.filterChange.emit({ field, value });
   }
 

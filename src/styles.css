@@ -346,6 +346,33 @@ input[type="range"] {
   opacity: 1;
 }
 
+/* On a filter label: the value was read from the search query ("under $25", "face cream"). */
+.query-tag {
+  padding: 1px 5px;
+  background-image: var(--gradient-brand);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  white-space: nowrap;
+}
+
+/* Tick box in the multi-select filter dropdowns (FilterSelectComponent). */
+.filter-check {
+  flex-shrink: 0;
+  width: 13px;
+  height: 13px;
+  border: 1px solid var(--color-ink);
+  background: #fff;
+}
+.filter-check--on {
+  border-color: var(--color-brand-dark);
+  background: var(--color-brand-dark)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 6.2l2.3 2.3 4.7-5' fill='none' stroke='%23fff' stroke-width='1.8'/%3E%3C/svg%3E")
+    center / 11px no-repeat;
+}
+
 /* Rating filter (RatingSelectComponent): a star row per option — filled stars in
    brand green like the cards, empty ones light gray, a half star as a filled star
    clipped to its left half over an empty one. */

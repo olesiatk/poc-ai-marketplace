@@ -52,24 +52,28 @@ export const BEAUTY_DATASET: DatasetConfig = {
 
   presetQueries: [
     // Checked against this catalog before picking. The first few are wording
-    // the catalog itself barely uses ("honeymoon", "sunkissed", "hangnails",
-    // "rosacea" — 0-5 keyword hits), so AI finds more products than keyword
-    // search does. The rest have a visibly wrong answer on the keyword side
-    // (perfumes for "without fragrance", red clay for "red lipstick", SPF 4
-    // tanning oil for "SPF 30+") — and two carry a price the slider picks up.
-    // The last leans on customer reviews ("gave it to my mom for her birthday,
-    // she loved it") more than on product descriptions.
+    // the catalog itself barely uses ("honeymoon", "sunkissed", "hangnails" —
+    // 0-3 keyword hits), so AI finds more products than keyword search does.
+    // The "Auto-filters" one names its filters explicitly — a price, "skin care
+    // category", "lotion form" — and the filters bar picks them all up. "ski
+    // trip" ticks every box of a convincing demo (npm run report:presets):
+    // more AI results than keyword ones, a keyword first page AI mostly
+    // filters out, many AI-only finds, two categories from the query — so
+    // it's the guided tour's demo. The rest have a visibly wrong answer on the
+    // keyword side (perfumes for "without fragrance", red clay for "red
+    // lipstick", SPF 4 tanning oil for "SPF 30+"); several also name a price
+    // or categories the filters pick up — the gift one two categories at once.
     { query: "honeymoon getaway", label: "Occasion" },
     { query: "sunkissed", label: "Glow" },
     { query: "hangnails", label: "Problem" },
-    { query: "rosacea", label: "Skin concern" },
+    { query: "moisturizer under $25, skin care category, lotion form", label: "Auto-filters" },
     { query: "shampoo without fragrance", label: "Negation" },
     { query: "red lipstick", label: "Color" },
     { query: "sunscreen SPF 30+ under $15", label: "Numbers" },
-    { query: "cologne for men under $20", label: "Budget" },
-    { query: "my hair gets frizzy in humid weather", label: "Intent" },
-    { query: "birthday gift my mom will love", label: "Reviews" },
+    { query: "aroma for men, under $20, fragrance category", label: "Budget" },
+    { query: "ski trip, skin care or makeup category", label: "Occasion" },
+    { query: "spoil my grandma, bath & body or skin care category", label: "Gift" },
   ],
   searchPlaceholder: 'e.g. "a hydrating serum for dry skin"',
-  demoQuery: "red lipstick",
+  demoQuery: "ski trip, skin care or makeup category",
 };

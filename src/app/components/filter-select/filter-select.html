@@ -1,5 +1,10 @@
 <div class="relative">
-  <label [for]="id()" class="block text-[10px] font-bold uppercase tracking-wide mb-1">{{ label() }}</label>
+  <label [for]="id()" class="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide mb-1">
+    {{ label() }}
+    @if (fromQuery()) {
+      <span class="query-tag">from your query</span>
+    }
+  </label>
 
   <div class="relative">
     <input
@@ -10,13 +15,14 @@
       [attr.aria-expanded]="isOpen()"
       [attr.aria-controls]="id() + '-listbox'"
       autocomplete="off"
-      [value]="isOpen() ? query() : value()"
-      [placeholder]="value() || placeholder()"
+      [value]="isOpen() ? query() : summary()"
+      [placeholder]="summary() || placeholder()"
+      [title]="summary()"
       (input)="onInput($event)"
       (focus)="onFocus()"
       (blur)="onBlur()"
       (keydown.escape)="onEscape()"
-      class="w-full pl-2.5 pr-8 py-1.5 border border-ink text-[13px] bg-white text-ink placeholder:text-ink outline-none focus:border-brand-dark"
+      class="w-full pl-2.5 pr-8 py-1.5 border border-ink text-[13px] bg-white text-ink placeholder:text-ink outline-none focus:border-brand-dark text-ellipsis"
     />
     <span class="absolute right-2.5 top-1/2 -translate-y-1/2 flex text-ink pointer-events-none">
       <app-icon name="chevron-down" [size]="14" />
@@ -27,29 +33,31 @@
     <ul
       [id]="id() + '-listbox'"
       role="listbox"
+      aria-multiselectable="true"
       (scroll)="onScroll($event)"
       class="absolute top-full left-0 right-0 mt-1 bg-white shadow-xl z-20 max-h-56 overflow-y-auto"
     >
-      <li role="option" [attr.aria-selected]="!value()">
+      <li role="option" [attr.aria-selected]="!value().length">
         <button
           type="button"
           (mousedown)="$event.preventDefault()"
-          (click)="select('')"
+          (click)="clear()"
           class="w-full text-left px-3 py-2 text-[13px] hover:bg-surface transition-colors"
-          [class.font-bold]="!value()"
+          [class.font-bold]="!value().length"
         >
           {{ placeholder() }}
         </button>
       </li>
       @for (opt of visibleOptions(); track opt) {
-        <li role="option" [attr.aria-selected]="opt === value()">
+        <li role="option" [attr.aria-selected]="isSelected(opt)">
           <button
             type="button"
             (mousedown)="$event.preventDefault()"
-            (click)="select(opt)"
-            class="w-full text-left px-3 py-2 text-[13px] hover:bg-surface transition-colors"
-            [class.font-bold]="opt === value()"
+            (click)="toggle(opt)"
+            class="w-full flex items-center gap-2 text-left px-3 py-2 text-[13px] hover:bg-surface transition-colors"
+            [class.font-bold]="isSelected(opt)"
           >
+            <span class="filter-check" [class.filter-check--on]="isSelected(opt)" aria-hidden="true"></span>
             {{ opt }}
           </button>
         </li>

@@ -235,6 +235,16 @@ describe("tokenize", () => {
 });
 
 describe("highlightHtml", () => {
+  it("keeps a query word yellow inside a green synonym phrase", () => {
+    const html = highlightHtml("I bought it on my Honeymoon cruise in Hawaii.", new Set(["honeymoon"]), new Set(["honeymoon cruise"]));
+    expect(html).toBe('I bought it on my <mark class="hl">Honeymoon</mark><mark class="hl-synonym"> cruise</mark> in Hawaii.');
+  });
+
+  it("splits a synonym phrase around a query word in its middle", () => {
+    const html = highlightHtml("Blood red lipstick", new Set(["red"]), new Set(["blood red lipstick"]));
+    expect(html).toBe('<mark class="hl-synonym">Blood </mark><mark class="hl">red</mark><mark class="hl-synonym"> lipstick</mark>');
+  });
+
   it("highlights an exact/direct term in yellow (class \"hl\")", () => {
     const html = highlightHtml("A hydrating cream.", new Set(["hydrating"]), null);
     expect(html).toBe('A <mark class="hl">hydrating</mark> cream.');

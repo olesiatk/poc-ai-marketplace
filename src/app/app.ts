@@ -13,17 +13,19 @@ import { ACTIVE_DATASET } from "./datasets/active";
 import { AiResults, type AiResult, type AiSnapshotFile } from "./lib/ai-results";
 import { groupReviews, itemFormOptions, itemForms } from "./lib/catalog";
 import { missedByKeyword, rankChanges } from "./lib/comparison";
-import { formatDate } from "./lib/format";
+import { formatDate, formatPrice } from "./lib/format";
 import { aiSearch, isGroqConfigured } from "./lib/groq";
 import { watchIframeHeight } from "./lib/iframe-resize";
 import { isEmbedded, listenToHost, sendFrameReady, sendTourStatus } from "./lib/post-message";
-import { parsePriceQuery } from "./lib/price-query";
+import { parseQueryFilters, type QueryFilters } from "./lib/query-filters";
 import { countQueryWords, localHeuristicSearch, wordFormProducts } from "./lib/search";
 import { buildVocabulary } from "./lib/suggestions";
 import { DEMO_QUERY, createTour } from "./lib/tour";
 import type { Filters, MatchesMap, Product, Review, ReviewsMap } from "./models/product.model";
 
-const EMPTY_FILTERS: Filters = { category: "", itemForm: "", maxPrice: Infinity, minRating: 0 };
+const EMPTY_FILTERS: Filters = { categories: [], itemForms: [], maxPrice: Infinity, minRating: 0 };
+
+type QueryFilterField = keyof QueryFilters;
 const NO_MATCHES: MatchesMap = new Map();
 
 /** The query shown on first load — the catalog's first preset, served from the recording. */
@@ -71,9 +73,13 @@ export class App implements OnDestroy {
   private aiResults: AiResults | null = null;
   // Guards against a slow AI response for an older query overwriting a newer one.
   private searchSeq = 0;
-  // True while the price slider sits where a query's budget ("under $20") put
-  // it — so the next query without a budget puts it back. Dragging it clears this.
-  private maxPriceFromQuery = false;
+  /**
+   * The filters the current query set by itself ("face cream under $25" →
+   * category, item form, max price) — shown as "from your query" on the
+   * filters bar, and put back by the next query that doesn't name them.
+   * Changing one by hand takes it off this list.
+   */
+  protected readonly filtersFromQuery = signal<ReadonlySet<QueryFilterField>>(new Set());
 
   protected readonly priceLimit = computed(() => {
     const list = this.products();
@@ -95,8 +101,8 @@ export class App implements OnDestroy {
     const filters = this.filters();
     return this.products().filter(
       (p) =>
-        (!filters.category || p.category === filters.category) &&
-        (!filters.itemForm || itemForms(p).includes(filters.itemForm)) &&
+        (!filters.categories.length || filters.categories.includes(p.category)) &&
+        (!filters.itemForms.length || itemForms(p).some((form) => filters.itemForms.includes(form))) &&
         p.price <= filters.maxPrice &&
         p.averageRating >= filters.minRating
     );
@@ -110,9 +116,11 @@ export class App implements OnDestroy {
    * stemming and field weighting, but no synonym expansion and no LLM.
    * Synchronous and instant, so it shows while the AI side is still working.
    */
+  /** The query minus the filters it names ("under $25", "cream form") — the words both searches look for. */
+  private readonly searchText = computed(() => this.queryFilters(this.query()).text);
   protected readonly keywordMatches = computed(() => {
     const query = this.query();
-    return query ? localHeuristicSearch(query, this.products(), this.reviews(), []) : NO_MATCHES;
+    return query ? localHeuristicSearch(this.searchText(), this.products(), this.reviews(), []) : NO_MATCHES;
   });
   protected readonly aiMatches = computed(() => this.aiResult()?.matches ?? NO_MATCHES);
 
@@ -122,7 +130,7 @@ export class App implements OnDestroy {
   private readonly keywordIds = computed(() => this.keywordProducts().map((p) => p.id));
   private readonly aiIds = computed(() => this.aiProducts().map((p) => p.id));
   protected readonly rankChanges = computed(() => rankChanges(this.keywordIds(), this.aiIds()));
-  protected readonly queryWordCount = computed(() => countQueryWords(this.query()));
+  protected readonly queryWordCount = computed(() => countQueryWords(this.searchText()));
   /** Keyword results that contain every query word — usually a small share of the "any word" total. */
   protected readonly keywordAllWordsCount = computed(() => {
     const matches = this.keywordMatches();
@@ -192,7 +200,7 @@ export class App implements OnDestroy {
         this.aiResults = new AiResults(
           snapshot,
           aiSearch,
-          (query, list, reviewsMap) => localHeuristicSearch(query, list, reviewsMap),
+          (query, list, reviewsMap) => localHeuristicSearch(this.queryFilters(query).text, list, reviewsMap),
           isGroqConfigured
         );
         // Open straight on a comparison, so the difference is visible without typing anything.
@@ -226,31 +234,47 @@ export class App implements OnDestroy {
   }
 
   protected onFilterChange(event: FilterChangeEvent): void {
-    if (event.field === "maxPrice") this.maxPriceFromQuery = false;
+    this.filtersFromQuery.update((set) => new Set([...set].filter((f) => f !== event.field)));
     this.filters.update((f) => ({ ...f, [event.field]: event.value }));
   }
 
   protected onResetFilters(): void {
-    this.maxPriceFromQuery = false;
+    this.filtersFromQuery.set(new Set());
     this.filters.set({ ...EMPTY_FILTERS, maxPrice: this.priceLimit() });
     this.onClearQuery();
   }
 
-  /** Moves the price slider to the query's budget, or back to the top if the previous query had set it. */
-  private applyQueryPrice(query: string): void {
-    const { maxPrice } = parsePriceQuery(query);
-    if (maxPrice !== null) {
-      this.maxPriceFromQuery = true;
-      this.filters.update((f) => ({ ...f, maxPrice: Math.min(maxPrice, this.priceLimit()) }));
-    } else {
-      this.releaseQueryPrice();
-    }
+  /** What `query` would set, out of the values the filter dropdowns offer. */
+  private queryFilters(query: string): QueryFilters {
+    const { categories, itemForms } = this.filterOptions();
+    return parseQueryFilters(query, categories, itemForms);
   }
 
-  private releaseQueryPrice(): void {
-    if (!this.maxPriceFromQuery) return;
-    this.maxPriceFromQuery = false;
-    this.filters.update((f) => ({ ...f, maxPrice: this.priceLimit() }));
+  /**
+   * Sets the filters the query names; puts back the ones the previous query
+   * had set but this one doesn't (filters set by hand stay as they are).
+   */
+  private applyQueryFilters(query: string): void {
+    const found = this.queryFilters(query);
+    const previous = this.filtersFromQuery();
+    const next = { ...this.filters() };
+    const fromQuery = new Set<QueryFilterField>();
+    if (found.maxPrice !== null) {
+      next.maxPrice = Math.min(found.maxPrice, this.priceLimit());
+      fromQuery.add("maxPrice");
+    } else if (previous.has("maxPrice")) {
+      next.maxPrice = this.priceLimit();
+    }
+    for (const field of ["categories", "itemForms"] as const) {
+      if (found[field].length) {
+        next[field] = found[field];
+        fromQuery.add(field);
+      } else if (previous.has(field)) {
+        next[field] = [];
+      }
+    }
+    this.filters.set(next);
+    this.filtersFromQuery.set(fromQuery);
   }
 
   /** Fills the search box with `query` and runs it — for preset chips, first load and the tour. */
@@ -262,7 +286,7 @@ export class App implements OnDestroy {
   protected async onSearch(rawQuery: string): Promise<void> {
     const trimmed = rawQuery.trim();
     const seq = ++this.searchSeq;
-    this.applyQueryPrice(trimmed);
+    this.applyQueryFilters(trimmed);
     this.query.set(trimmed);
     this.aiResult.set(null);
     if (!trimmed || !this.aiResults) {
@@ -279,7 +303,7 @@ export class App implements OnDestroy {
 
   protected onClearQuery(): void {
     this.searchSeq++;
-    this.releaseQueryPrice();
+    this.applyQueryFilters("");
     this.searchValue.set("");
     this.query.set("");
     this.aiResult.set(null);
@@ -296,6 +320,18 @@ export class App implements OnDestroy {
     this.stopHostListener();
   }
 
+  /** 'category "Skin Care", item form "Cream" or "Lotion", max price $25' — what `query` sets; null if nothing. */
+  private describeQueryFilters(query: string): string | null {
+    const { categories, itemForms, maxPrice } = this.queryFilters(query);
+    const quoted = (values: string[]) => values.map((v) => `"${v}"`).join(" or ");
+    const parts = [
+      categories.length && `category ${quoted(categories)}`,
+      itemForms.length && `item form ${quoted(itemForms)}`,
+      maxPrice !== null && `max price ${formatPrice(maxPrice)}`,
+    ].filter(Boolean);
+    return parts.length ? parts.join(", ") : null;
+  }
+
   protected startTour(): void {
     this.tourDriver ??= createTour({
       runDemoSearch: () => this.runQuery(DEMO_QUERY),
@@ -304,6 +340,7 @@ export class App implements OnDestroy {
         if (first) this.selected.set({ id: first.id, side: "ai" });
       },
       reset: () => this.resetTourDemo(),
+      demoFilters: this.describeQueryFilters(DEMO_QUERY),
     });
     sendTourStatus(true);
     this.tourDriver.drive();

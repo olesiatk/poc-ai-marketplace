@@ -56,9 +56,10 @@ export interface MatchInfo {
 export type MatchesMap = Map<string, MatchInfo>;
 
 export interface Filters {
-  category: string;
-  /** One of {@link FilterOptions.itemForms}; "" = any. */
-  itemForm: string;
+  /** Any of these; empty = all categories. */
+  categories: string[];
+  /** Any of {@link FilterOptions.itemForms}; empty = all forms. */
+  itemForms: string[];
   maxPrice: number;
   /** 0 = any rating. */
   minRating: number;

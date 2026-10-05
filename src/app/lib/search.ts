@@ -11,6 +11,8 @@ const STOPWORDS = new Set([
   "in", "on", "at", "to", "from", "by", "with", "without", "about", "into",
   "my", "your", "our", "their", "his", "its", "some", "any", "very", "really",
   "please", "would", "will", "like", "something", "someone", "just", "can", "could",
+  // How a query names a filter ("cream form", "category hair care") — not words to find in products.
+  "form", "forms", "category", "categories",
 ]);
 
 export function tokenize(text: string): string[] {
@@ -222,8 +224,9 @@ const HIGHLIGHT_CLASS = {
  * Escapes `text` and wraps any occurrence of a term from `directTerms` or
  * `synonymTerms` (Unicode-aware word boundaries) in a <mark>: yellow
  * (`hl`) for an exact query-word match, light green (`hl-synonym`) for a
- * term pulled in via synonym/phrase expansion. Returns an HTML string
- * suitable for [innerHTML].
+ * term pulled in via synonym/phrase expansion — except that a query word
+ * inside a synonym phrase stays yellow. Returns an HTML string suitable
+ * for [innerHTML].
  */
 export function highlightHtml(
   text: string | null | undefined,
@@ -247,9 +250,23 @@ export function highlightHtml(
   if (!pattern) return escaped;
 
   const re = new RegExp(`(?<![\\p{L}\\p{N}])(${pattern})(?![\\p{L}\\p{N}])`, "giu");
+  const exactTerms = [...classByTerm].filter(([, kind]) => kind === "exact").map(([term]) => term);
+  // Splits a synonym phrase around the exact query words inside it, capturing them.
+  const exactRe = exactTerms.length
+    ? new RegExp(`(?<![\\p{L}\\p{N}])(${exactTerms.sort((a, b) => b.length - a.length).map(escapeRegExp).join("|")})(?![\\p{L}\\p{N}])`, "giu")
+    : null;
+  const mark = (kind: keyof typeof HIGHLIGHT_CLASS, part: string) => `<mark class="${HIGHLIGHT_CLASS[kind]}">${part}</mark>`;
+
   return escaped.replace(re, (match) => {
     const kind = classByTerm.get(match.toLowerCase()) ?? "exact";
-    return `<mark class="${HIGHLIGHT_CLASS[kind]}">${match}</mark>`;
+    if (kind === "exact" || !exactRe) return mark(kind, match);
+    // A synonym phrase that contains a query word ("Honeymoon cruise" for
+    // "honeymoon getaway"): the query word stays yellow — it's what the
+    // shopper recognizes first — and only the rest of the phrase is green.
+    return match
+      .split(exactRe)
+      .map((part, i) => (i % 2 ? mark("exact", part) : part ? mark("synonym", part) : ""))
+      .join("");
   });
 }
 

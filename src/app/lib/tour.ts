@@ -16,6 +16,12 @@ export interface TourActions {
   openFirstResult: () => void;
   /** Closes the modal and restores the default comparison, however the tour ends. */
   reset: () => void;
+  /**
+   * The filters {@link DEMO_QUERY} sets by itself, ready to read
+   * ('category "Skin Care", max price $25'); null when it sets none — then
+   * the tour skips the step that points them out.
+   */
+  demoFilters: string | null;
 }
 
 /**
@@ -99,7 +105,8 @@ export function createTour(actions: TourActions): Driver {
         element: '[data-tour="filters-bar"]',
         popover: {
           title: "Fine-tune with filters",
-          description: "Narrow the catalog by category, item form, rating, or price. Filters apply to both searches.",
+          description:
+            "Narrow the catalog by category, item form, rating, or price — or just say it in your query. Filters apply to both searches.",
         },
       },
       {
@@ -114,6 +121,17 @@ export function createTour(actions: TourActions): Driver {
           },
         },
       },
+      ...(actions.demoFilters
+        ? [
+            {
+              element: '[data-tour="filters-bar"]',
+              popover: {
+                title: "Filters from your words",
+                description: `AI read the query too and set the filters for you: ${actions.demoFilters} — each tagged "from your query". Change or clear them any time.`,
+              },
+            },
+          ]
+        : []),
       {
         element: '[data-tour="comparison"]',
         waitForElement: 2000,

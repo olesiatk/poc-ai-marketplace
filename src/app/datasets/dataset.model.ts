@@ -49,6 +49,7 @@ export interface DatasetConfig {
   /** Placeholder text for the search box. */
   searchPlaceholder: string;
 
+
   /**
    * The query the guided tour runs live — should be one of `presetQueries`
    * so it's served from the recording. Should trigger both an exact match
