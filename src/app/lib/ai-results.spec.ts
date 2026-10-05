@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { AiResults, LIVE_COOLDOWN_MS, normalizeQuery, type AiSnapshotFile, type LiveSearch } from "./ai-results";
+import { AiResults, LIVE_SEARCH_TOKENS, TOKENS_PER_MINUTE, normalizeQuery, type AiSnapshotFile, type LiveSearch } from "./ai-results";
 import type { MatchesMap } from "../models/product.model";
 
 const SNAPSHOT: AiSnapshotFile = {
@@ -7,6 +7,11 @@ const SNAPSHOT: AiSnapshotFile = {
   model: "test-model",
   queries: { unscented: [{ id: "p-1", score: 90, directTerms: [], synonymTerms: ["fragrance-free"] }] },
 };
+
+// Time for the token budget to refill `tokens`.
+const refillMs = (tokens: number) => Math.ceil((tokens / TOKENS_PER_MINUTE) * 60_000);
+// Long enough for an empty budget to fill up completely.
+const FULL_REFILL_MS = 60_000;
 
 const liveMatches: MatchesMap = new Map([["p-live", { score: 80, directTerms: new Set(), synonymTerms: new Set() }]]);
 const localMatches: MatchesMap = new Map([["p-local", { score: 5, directTerms: new Set(), synonymTerms: new Set() }]]);
@@ -39,44 +44,51 @@ describe("AiResults", () => {
   it("calls the LLM live for other queries, and caches the answer", async () => {
     const { results, live, advance } = setup();
     expect((await results.search("hydrating serum", [], {})).mode).toBe("groq");
-    advance(LIVE_COOLDOWN_MS * 2);
+    advance(FULL_REFILL_MS);
     expect((await results.search("Hydrating  serum", [], {})).matches).toBe(liveMatches);
     expect(live).toHaveBeenCalledTimes(1);
   });
 
-  it("uses the local fallback instead of a doomed live call within the cooldown", async () => {
+  it("uses the local fallback instead of a doomed live call while the token budget is short", async () => {
     const { results, live } = setup();
     await results.search("first query", [], {});
-    const second = await results.search("second query", [], {});
+    await results.search("second query", [], {});
+    const third = await results.search("third query", [], {});
     expect(live).toHaveBeenCalledTimes(1);
-    expect(second).toMatchObject({ mode: "local", aiUnavailable: true });
-    expect(second.matches).toBe(localMatches);
+    expect(third).toMatchObject({ mode: "local", aiUnavailable: true });
+    expect(third.matches).toBe(localMatches);
   });
 
-  it("tells how long a live query has to wait for the cooldown — nothing for recorded or cached ones", async () => {
+  it("tells how long a live query has to wait for the token budget — nothing for recorded or cached ones", async () => {
     const { results, advance } = setup();
     expect(results.waitMs("first query")).toBe(0);
     await results.search("first query", [], {});
-    advance(20_000);
-    expect(results.waitMs("second query")).toBe(LIVE_COOLDOWN_MS - 20_000);
+    // A full budget minus one search leaves a bit short of a second one.
+    const shortBy = LIVE_SEARCH_TOKENS - (TOKENS_PER_MINUTE - LIVE_SEARCH_TOKENS);
+    expect(results.waitMs("second query")).toBe(refillMs(shortBy));
     expect(results.waitMs("unscented")).toBe(0);
     expect(results.waitMs("First  query")).toBe(0);
-    advance(LIVE_COOLDOWN_MS);
+    advance(refillMs(shortBy));
     expect(results.waitMs("second query")).toBe(0);
   });
 
-  it("calls the LLM again once the cooldown has passed", async () => {
+  it("settles at one live search per refill of a search's worth of tokens", async () => {
     const { results, live, advance } = setup();
     await results.search("first query", [], {});
-    advance(LIVE_COOLDOWN_MS);
+    advance(results.waitMs("second query"));
     await results.search("second query", [], {});
-    expect(live).toHaveBeenCalledTimes(2);
+    expect(results.waitMs("third query")).toBe(refillMs(LIVE_SEARCH_TOKENS));
+    advance(refillMs(LIVE_SEARCH_TOKENS));
+    await results.search("third query", [], {});
+    expect(live).toHaveBeenCalledTimes(3);
   });
 
   it("flags an LLM failure as unavailable and doesn't cache it", async () => {
     const { results, live, advance } = setup({ live: async () => ({ matches: localMatches, mode: "local", error: "429" }) });
     expect(await results.search("q", [], {})).toMatchObject({ mode: "local", aiUnavailable: true });
-    advance(LIVE_COOLDOWN_MS);
+    // A failure empties the budget: the next try waits for a whole search's worth.
+    expect(results.waitMs("q")).toBe(refillMs(LIVE_SEARCH_TOKENS));
+    advance(refillMs(LIVE_SEARCH_TOKENS));
     await results.search("q", [], {});
     expect(live).toHaveBeenCalledTimes(2);
   });

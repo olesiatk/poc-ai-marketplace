@@ -68,7 +68,7 @@ export class App implements OnDestroy {
   protected readonly query = signal("");
   protected readonly aiResult = signal<AiResult | null>(null);
   protected readonly isSearching = signal(false);
-  /** Seconds left before the AI side can search live (the free plan allows one live search a minute); 0 = not waiting. */
+  /** Seconds left before the AI side can search live (the free plan's per-minute token budget); 0 = not waiting. */
   protected readonly aiWaitSeconds = signal(0);
   protected readonly aiLoadingText = computed(() =>
     this.aiWaitSeconds() ? `AI will search in ${this.aiWaitSeconds()} s…` : "AI is analyzing the catalog…"
@@ -153,7 +153,7 @@ export class App implements OnDestroy {
 
   protected readonly statusMessage = computed(() => {
     if (!this.query()) return "";
-    if (this.aiWaitSeconds()) return `AI will search in ${this.aiWaitSeconds()} s… (the demo allows one live AI search a minute)`;
+    if (this.aiWaitSeconds()) return `AI will search in ${this.aiWaitSeconds()} s… (the demo's free AI plan has a per-minute limit)`;
     if (this.isSearching()) return "AI is analyzing your query…";
     if (!this.aiResult()) return "";
     const missed = this.missedCount();
