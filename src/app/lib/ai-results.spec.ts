@@ -53,6 +53,18 @@ describe("AiResults", () => {
     expect(second.matches).toBe(localMatches);
   });
 
+  it("tells how long a live query has to wait for the cooldown — nothing for recorded or cached ones", async () => {
+    const { results, advance } = setup();
+    expect(results.waitMs("first query")).toBe(0);
+    await results.search("first query", [], {});
+    advance(20_000);
+    expect(results.waitMs("second query")).toBe(LIVE_COOLDOWN_MS - 20_000);
+    expect(results.waitMs("unscented")).toBe(0);
+    expect(results.waitMs("First  query")).toBe(0);
+    advance(LIVE_COOLDOWN_MS);
+    expect(results.waitMs("second query")).toBe(0);
+  });
+
   it("calls the LLM again once the cooldown has passed", async () => {
     const { results, live, advance } = setup();
     await results.search("first query", [], {});

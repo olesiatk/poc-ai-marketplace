@@ -54,6 +54,8 @@ export class SearchComparisonComponent {
   /** Keyword results containing every query word, vs. the total containing any of them. */
   readonly keywordAllWordsCount = input.required<number>();
   readonly aiLoading = input(false);
+  /** What the AI side says while loading — e.g. a countdown to its next live search. */
+  readonly aiLoadingText = input("AI is analyzing the catalog…");
   /** E.g. "Recorded AI run", "Live AI", "AI busy — local"; shown next to the AI heading. */
   readonly aiNote = input<string | null>(null);
 

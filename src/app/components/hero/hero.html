@@ -58,10 +58,13 @@
     >
       <app-icon name="mic" [size]="18" />
     </button>
+    <!-- Never disabled while searching: a disabled submit button also blocks
+         Enter in the field, and a new query must always be able to replace
+         the one in progress (or waiting for its live-search turn). -->
     <button
       type="submit"
-      [disabled]="isSearching()"
-      class="cta-label shrink-0 bg-gradient-brand transition-color disabled:opacity-60 text-white hover:text-ink uppercase text-xs tracking-wide"
+      class="cta-label shrink-0 bg-gradient-brand transition-color text-white hover:text-ink uppercase text-xs tracking-wide"
+      [class.opacity-80]="isSearching()"
     >
       {{ isSearching() ? "Searching…" : "AI Search" }}
     </button>

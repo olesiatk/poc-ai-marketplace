@@ -68,6 +68,11 @@ export class App implements OnDestroy {
   protected readonly query = signal("");
   protected readonly aiResult = signal<AiResult | null>(null);
   protected readonly isSearching = signal(false);
+  /** Seconds left before the AI side can search live (the free plan allows one live search a minute); 0 = not waiting. */
+  protected readonly aiWaitSeconds = signal(0);
+  protected readonly aiLoadingText = computed(() =>
+    this.aiWaitSeconds() ? `AI will search in ${this.aiWaitSeconds()} s…` : "AI is analyzing the catalog…"
+  );
   protected readonly selected = signal<ComparisonSelection | null>(null);
 
   private aiResults: AiResults | null = null;
@@ -148,6 +153,7 @@ export class App implements OnDestroy {
 
   protected readonly statusMessage = computed(() => {
     if (!this.query()) return "";
+    if (this.aiWaitSeconds()) return `AI will search in ${this.aiWaitSeconds()} s… (the demo allows one live AI search a minute)`;
     if (this.isSearching()) return "AI is analyzing your query…";
     if (!this.aiResult()) return "";
     const missed = this.missedCount();
@@ -289,20 +295,43 @@ export class App implements OnDestroy {
     this.applyQueryFilters(trimmed);
     this.query.set(trimmed);
     this.aiResult.set(null);
+    this.aiWaitSeconds.set(0);
     if (!trimmed || !this.aiResults) {
       this.isSearching.set(false);
       return;
     }
 
     this.isSearching.set(true);
+    // Within the live-call cooldown: count down, then search for real —
+    // unless a newer search replaced this one meanwhile (then only the
+    // latest query goes to the AI).
+    const wait = this.aiResults.waitMs(trimmed);
+    if (wait > 0 && !(await this.waitForLiveTurn(wait, seq))) return;
     const result = await this.aiResults.search(trimmed, this.products(), this.reviews());
     if (seq !== this.searchSeq) return;
     this.aiResult.set(result);
     this.isSearching.set(false);
   }
 
+  /** Ticks `aiWaitSeconds` down over `ms`; false if search `seq` was replaced meanwhile. */
+  private async waitForLiveTurn(ms: number, seq: number): Promise<boolean> {
+    const end = Date.now() + ms;
+    while (seq === this.searchSeq) {
+      const left = end - Date.now();
+      if (left <= 0) {
+        this.aiWaitSeconds.set(0);
+        return true;
+      }
+      this.aiWaitSeconds.set(Math.ceil(left / 1000));
+      // Wake on the next whole second, so the countdown ticks evenly.
+      await new Promise((resolve) => setTimeout(resolve, left % 1000 || 1000));
+    }
+    return false;
+  }
+
   protected onClearQuery(): void {
     this.searchSeq++;
+    this.aiWaitSeconds.set(0);
     this.applyQueryFilters("");
     this.searchValue.set("");
     this.query.set("");

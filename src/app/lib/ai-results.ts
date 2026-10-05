@@ -70,6 +70,18 @@ export class AiResults {
     return !!this.snapshot?.queries[normalizeQuery(query)];
   }
 
+  /**
+   * How long `query` has to wait before it can be searched live: 0 when it's
+   * served without the LLM (recorded, cached, no API key) or the cooldown
+   * since the last live call is over. Lets the UI count down and search for
+   * real afterwards instead of falling back to local search right away.
+   */
+  waitMs(query: string): number {
+    const key = normalizeQuery(query);
+    if (this.snapshot?.queries[key] || this.cache.has(key) || !this.liveEnabled) return 0;
+    return Math.max(0, LIVE_COOLDOWN_MS - (this.now() - this.lastLiveCall));
+  }
+
   async search(query: string, products: Product[], reviews: ReviewsMap): Promise<AiResult> {
     const key = normalizeQuery(query);
     const recorded = this.snapshot?.queries[key];

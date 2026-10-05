@@ -33,6 +33,7 @@ export class ResultColumnComponent {
   readonly pageSize = input.required<number>();
   readonly hoveredId = input<string | null>(null);
   readonly loading = input(false);
+  readonly loadingText = input("AI is analyzing the catalog…");
   readonly emptyText = input.required<string>();
   /** Small note next to the heading, e.g. which AI engine produced the list. */
   readonly note = input<string | null>(null);

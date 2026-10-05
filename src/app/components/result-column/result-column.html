@@ -16,7 +16,7 @@
 @if (loading()) {
   <output class="flex flex-col items-center justify-center gap-2 py-12">
     <div class="w-7 h-7 border-4 border-line border-t-brand-dark rounded-full animate-spin"></div>
-    <p class="text-xs text-body">AI is analyzing the catalog…</p>
+    <p class="text-xs text-body">{{ loadingText() }}</p>
   </output>
 } @else if (products().length === 0) {
   <p class="bg-surface text-center text-body text-xs px-4 py-10">{{ emptyText() }}</p>

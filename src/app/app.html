@@ -36,6 +36,7 @@
           [queryWordCount]="queryWordCount()"
           [keywordAllWordsCount]="keywordAllWordsCount()"
           [aiLoading]="isSearching()"
+          [aiLoadingText]="aiLoadingText()"
           [aiNote]="aiNote()"
           (select)="onSelect($event.id, $event.side)"
           (clearQuery)="onClearQuery()"
