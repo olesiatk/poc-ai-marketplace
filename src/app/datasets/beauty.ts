@@ -60,15 +60,15 @@ export const BEAUTY_DATASET: DatasetConfig = {
     // more AI results than keyword ones, a keyword first page AI mostly
     // filters out, many AI-only finds, two categories from the query — so
     // it's the guided tour's demo. The rest have a visibly wrong answer on the
-    // keyword side (perfumes for "without fragrance", red clay for "red
-    // lipstick", SPF 4 tanning oil for "SPF 30+"); several also name a price
+    // keyword side (perfumes for "without fragrance", eyeliner and pink nails
+    // for "soft pink eyeshadow", SPF 4 tanning oil for "SPF 30+"); several also name a price
     // or categories the filters pick up — the gift one two categories at once.
     { query: "honeymoon getaway", label: "Occasion" },
     { query: "sunkissed", label: "Glow" },
     { query: "hangnails", label: "Problem" },
     { query: "moisturizer under $25, skin care category, lotion form", label: "Auto-filters" },
     { query: "shampoo without fragrance", label: "Negation" },
-    { query: "red lipstick", label: "Color" },
+    { query: "soft pink eyeshadow", label: "Color" },
     { query: "sunscreen SPF 30+ under $15", label: "Numbers" },
     { query: "aroma for men, under $20, fragrance category", label: "Budget" },
     { query: "ski trip, skin care or makeup category", label: "Occasion" },

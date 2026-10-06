@@ -1,5 +1,5 @@
 {
-  "recordedAt": "2026-10-05T09:43:42.362Z",
+  "recordedAt": "2026-10-06T07:12:51.256Z",
   "model": "openai/gpt-oss-20b",
   "queries": {
     "honeymoon getaway": [
@@ -264,89 +264,42 @@
         ]
       }
     ],
-    "red lipstick": [
+    "soft pink eyeshadow": [
       {
-        "id": "B072JG9WW8",
+        "id": "B07ZM8BCNT",
         "score": 95,
         "directTerms": [
-          "red",
-          "redder",
-          "lipstick",
-          "lipsticks"
+          "pink",
+          "eyeshadow",
+          "eyeshadows"
         ],
         "synonymTerms": [
-          "blood red",
-          "matte waterproof"
+          "matte",
+          "metallic"
         ]
       },
       {
-        "id": "B07B3X1LDS",
+        "id": "B01849RRZO",
         "score": 90,
         "directTerms": [
-          "red",
-          "reds",
-          "lipstick",
-          "lipsticks"
+          "soft",
+          "eyeshadow"
         ],
         "synonymTerms": [
-          "red & pink",
-          "velour liquid"
+          "metallic"
         ]
       },
       {
-        "id": "B0BVQQ58G8",
-        "score": 80,
+        "id": "B09R826BXF",
+        "score": 88,
         "directTerms": [
-          "red",
-          "lipstick"
+          "pink",
+          "eyeshadow",
+          "eyeshadows"
         ],
         "synonymTerms": [
-          "berried",
-          "metallic red"
-        ]
-      },
-      {
-        "id": "B018WCSZZ4",
-        "score": 75,
-        "directTerms": [
-          "red",
-          "lipstick"
-        ],
-        "synonymTerms": [
-          "orange red",
-          "vivid matte"
-        ]
-      },
-      {
-        "id": "B07DZ1Y5TN",
-        "score": 70,
-        "directTerms": [
-          "red",
-          "lipstick"
-        ],
-        "synonymTerms": [
-          "cherry wet",
-          "liquid lipstick"
-        ]
-      },
-      {
-        "id": "B07Y3VCTKL",
-        "score": 70,
-        "directTerms": [
-          "lipstick"
-        ],
-        "synonymTerms": [
-          "succulent cherry"
-        ]
-      },
-      {
-        "id": "B09DF955L7",
-        "score": 65,
-        "directTerms": [
-          "lipstick"
-        ],
-        "synonymTerms": [
-          "wine bottle"
+          "highly pigmented",
+          "shimmery"
         ]
       }
     ],
