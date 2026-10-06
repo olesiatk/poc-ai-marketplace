@@ -95,15 +95,39 @@ function rankedIds(matches: MatchesMap): string[] {
   return [...matches.entries()].sort((a, b) => b[1].score - a[1].score).map(([id]) => id);
 }
 
+// Fusing two rankings (plan words, meaning) by position, not raw score:
+// their scores aren't comparable. Standard reciprocal-rank fusion constant.
+const RRF_K = 60;
+// Vector neighbours further than this below the closest one don't make the pool.
+const VECTOR_WINDOW = 0.15;
+
+function reciprocalRanks(ids: readonly string[]): Map<string, number> {
+  return new Map(ids.map((id, i) => [id, 1 / (RRF_K + i)]));
+}
+
+/** Ids of `products` by similarity, closest first, within VECTOR_WINDOW of the closest. */
+function nearest(products: readonly Product[], similarity: ReadonlyMap<string, number>): string[] {
+  const ranked = products.filter((p) => similarity.has(p.id)).sort((a, b) => similarity.get(b.id)! - similarity.get(a.id)!);
+  const cut = ranked.length ? similarity.get(ranked[0].id)! - VECTOR_WINDOW : 0;
+  return ranked.filter((p) => similarity.get(p.id)! >= cut).slice(0, MAX_CANDIDATES).map((p) => p.id);
+}
+
 /**
  * Picks the products for the rerank call, best first: keyword search's
  * first page (whole catalog), its next results that are in the planned
- * categories and retrieval also found, then products in the plan's
- * categories (all, without a plan) ranked by local search with the plan's
- * terms added as synonyms of the query — up to MAX_CANDIDATES, stopping
- * early once scores fall below SCORE_FLOOR of the best one.
+ * categories and retrieval also found, then the best of two rankings fused
+ * by position — local search in the plan's categories (all, without a plan)
+ * with the plan's terms added as synonyms of the query (cut off where scores
+ * fall below SCORE_FLOOR of the best one), and, given `similarity`, the
+ * products closest in meaning (vector search) — up to MAX_CANDIDATES.
  */
-export function selectCandidates(query: string, products: Product[], reviews: ReviewsMap, plan: QueryPlan | null): Product[] {
+export function selectCandidates(
+  query: string,
+  products: Product[],
+  reviews: ReviewsMap,
+  plan: QueryPlan | null,
+  similarity: ReadonlyMap<string, number> | null = null
+): Product[] {
   const categories = new Set(plan?.categories);
   const inScope = (p: Product) => !categories.size || categories.has(p.category);
   const scope = products.filter(inScope);
@@ -118,14 +142,19 @@ export function selectCandidates(query: string, products: Product[], reviews: Re
   const score = (id: string) => expanded.get(id)?.score ?? 0;
   const byId = new Map(products.map((p) => [p.id, p]));
 
+  const ranked = rankedIds(expanded);
+  const floor = Math.max(MIN_FLOOR_SCORE, SCORE_FLOOR * score(ranked[0] ?? ""));
+  const byWords = ranked.filter((id, i) => i < MIN_CANDIDATES || score(id) >= floor);
+  const byMeaning = similarity ? nearest(products, similarity) : [];
+  const wordRanks = reciprocalRanks(byWords);
+  const meaningRanks = reciprocalRanks(byMeaning);
+  const fused = (id: string) => (wordRanks.get(id) ?? 0) + (meaningRanks.get(id) ?? 0);
+
   const keyword = rankedIds(localHeuristicSearch(query, products, reviews, [])).slice(0, KEYWORD_TOP);
   const ids = new Set(keyword.slice(0, KEYWORD_PAGE));
   for (const id of keyword.slice(KEYWORD_PAGE)) if (inScope(byId.get(id)!) && expanded.has(id)) ids.add(id);
-
-  const ranked = rankedIds(expanded);
-  const floor = Math.max(MIN_FLOOR_SCORE, SCORE_FLOOR * score(ranked[0] ?? ""));
-  for (const id of ranked) {
-    if (ids.size >= MAX_CANDIDATES || (score(id) < floor && ids.size >= MIN_CANDIDATES)) break;
+  for (const id of [...new Set([...byWords, ...byMeaning])].sort((a, b) => fused(b) - fused(a))) {
+    if (ids.size >= MAX_CANDIDATES) break;
     ids.add(id);
   }
   for (const p of scope) {
@@ -134,7 +163,47 @@ export function selectCandidates(query: string, products: Product[], reviews: Re
   }
 
   // Best first, so the rich entries go to the strongest candidates.
-  return [...ids].sort((a, b) => score(b) - score(a)).map((id) => byId.get(id)!);
+  return [...ids].sort((a, b) => fused(b) - fused(a) || score(b) - score(a)).map((id) => byId.get(id)!);
+}
+
+// The AI column goes on past what the model judged: more products close in
+// meaning, so it isn't capped by how many fit in one LLM call. A small
+// embedding model is too coarse to trust on its own — junk and good matches
+// overlap in raw similarity — so a product only joins if it sits at least as
+// close as the closest quarter of the matches the model accepted (the median
+// still let perfumes into "sunkissed"), at most TAIL_MAX of them (checked
+// with npm run report:presets).
+export const TAIL_MAX = 24;
+const TAIL_QUANTILE = 0.75;
+
+/** The value `q` of the way up `values` (0 = lowest, 1 = highest), interpolated. */
+function quantile(values: number[], q: number): number {
+  const sorted = [...values].sort((a, b) => a - b);
+  const at = (sorted.length - 1) * q;
+  const lo = Math.floor(at);
+  return sorted[lo] + (sorted[Math.min(lo + 1, sorted.length - 1)] - sorted[lo]) * (at - lo);
+}
+
+/**
+ * Products close in meaning beyond the ones the model already judged
+ * (`judged`, matched or not — a candidate the model turned down stays out),
+ * at least as close as the closest quarter of those it `accepted`, closest first,
+ * among those `allowed` (the query's own filters). None if it accepted none.
+ */
+export function similarTail(
+  similarity: ReadonlyMap<string, number>,
+  allowed: (id: string) => boolean,
+  judged: ReadonlySet<string>,
+  accepted: readonly string[]
+): { id: string; similarity: number }[] {
+  const acceptedSims = accepted.map((id) => similarity.get(id)).filter((s): s is number => s !== undefined);
+  if (!acceptedSims.length) return [];
+  const cut = quantile(acceptedSims, TAIL_QUANTILE);
+  return [...similarity]
+    .filter(([id, sim]) => allowed(id) && !judged.has(id) && sim >= cut)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, TAIL_MAX)
+    .map(([id, sim]) => ({ id, similarity: sim }));
 }
 
 /** The rerank call's catalog: one text block, and which product each line number stands for. */

@@ -32,6 +32,7 @@ import { KEYWORD_PAGE } from "../src/app/lib/candidates.ts";
 import { groupReviews } from "../src/app/lib/catalog.ts";
 import { passesQueryFilters, queryFiltersFor } from "../src/app/lib/query-filters.ts";
 import { localHeuristicSearch } from "../src/app/lib/search.ts";
+import { createVectorSearch, type EmbeddingsFile } from "../src/app/lib/vector-search.ts";
 import type { MatchesMap, Product, Review } from "../src/app/models/product.model.ts";
 
 const DATASETS: Record<string, DatasetConfig> = { beauty: BEAUTY_DATASET, health: HEALTH_DATASET };
@@ -53,6 +54,7 @@ const candidates = mode === "presets" ? [] : args.slice(1);
 const publicDir = join(dirname(fileURLToPath(import.meta.url)), "..", "public");
 const products: Product[] = JSON.parse(readFileSync(join(publicDir, dataset.productsUrl), "utf8"));
 const reviews = groupReviews(JSON.parse(readFileSync(join(publicDir, dataset.reviewsUrl), "utf8")) as Review[]);
+const loadEmbeddings = async () => JSON.parse(readFileSync(join(publicDir, dataset.embeddingsUrl), "utf8")) as EmbeddingsFile;
 const byId = new Map(products.map((p) => [p.id, p]));
 
 /** Best first, most-rated breaking ties — the order the comparison columns use. */
@@ -99,8 +101,12 @@ function report(query: string, aiMatches: MatchesMap | null): Row {
     console.log(`  keyword: ${keyword.length} results — first page (✕ = filtered out by AI):`);
     for (const p of firstPage) console.log(`    ${ai && !aiIds.has(p.id) ? "✕" : " "} ${p.category.slice(0, 12).padEnd(12)} ${p.title.slice(0, 70)}`);
     if (ai) {
-      console.log(`  AI: ${ai.length} results (✓ = found only by AI):`);
-      for (const p of ai.slice(0, 12)) console.log(`    ${keywordIds.has(p.id) ? " " : "✓"} ${p.category.slice(0, 12).padEnd(12)} ${p.title.slice(0, 70)}`);
+      const byMeaning = ai.filter((p) => aiMatches!.get(p.id)!.bySimilarity).length;
+      console.log(`  AI: ${ai.length} results, ${byMeaning} of them past the model, by meaning (✓ = found only by AI, ≈ = by meaning):`);
+      for (const p of ai.slice(0, 30)) {
+        const mark = `${keywordIds.has(p.id) ? " " : "✓"}${aiMatches!.get(p.id)!.bySimilarity ? "≈" : " "}`;
+        console.log(`    ${mark} ${p.category.slice(0, 12).padEnd(12)} ${p.title.slice(0, 70)}`);
+      }
     }
   }
   return { query, keyword: keyword.length, ai: ai?.length ?? null, filteredOut, aiOnly, multiFilter, score: checks.filter(Boolean).length };
@@ -139,6 +145,7 @@ async function main(): Promise<void> {
   }
   // --try: imported lazily so the other modes don't need a generated environment.ts.
   const { aiSearch, isGroqConfigured } = await import("../src/app/lib/groq.ts");
+  const vectors = createVectorSearch(loadEmbeddings);
   if (!isGroqConfigured) {
     console.error("No GROQ_API_KEY configured (put one in .env) — --try needs live AI search.");
     process.exit(1);
@@ -146,7 +153,7 @@ async function main(): Promise<void> {
   const rows: Row[] = [];
   for (const [i, query] of candidates.entries()) {
     if (i > 0) await new Promise((resolve) => setTimeout(resolve, PACE_MS));
-    const result = await aiSearch(query, products, reviews);
+    const result = await aiSearch(query, products, reviews, vectors);
     if (result.mode !== "groq") console.warn(`("${query}" fell back to local search: ${result.error?.slice(0, 80) ?? "no key"})`);
     rows.push(report(query, result.matches));
   }

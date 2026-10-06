@@ -27,6 +27,8 @@ export class HeroComponent implements OnDestroy {
   readonly howItWorks = output<void>();
   readonly pickPreset = output<string>();
   readonly clearQuery = output<void>();
+  /** The visitor is about to type — a cue to start loading what live search needs. */
+  readonly searchFocus = output<void>();
 
   protected readonly placeholder = ACTIVE_DATASET.searchPlaceholder;
   protected readonly voiceError = signal<string | null>(null);
@@ -107,6 +109,7 @@ export class HeroComponent implements OnDestroy {
   }
 
   protected onFocus(): void {
+    this.searchFocus.emit();
     this.emptyQueryError.set(false);
     this.showSuggestions.set(true);
   }

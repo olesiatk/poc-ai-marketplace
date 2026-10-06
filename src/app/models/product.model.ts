@@ -51,6 +51,8 @@ export interface MatchInfo {
   synonymTerms: Set<string>;
   /** Local search only: the product contains every word of the query (not just some). */
   matchesAllWords?: boolean;
+  /** AI search only: found by meaning (vector search) beyond what the model itself judged. */
+  bySimilarity?: boolean;
 }
 
 export type MatchesMap = Map<string, MatchInfo>;

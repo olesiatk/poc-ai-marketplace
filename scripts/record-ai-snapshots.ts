@@ -22,6 +22,7 @@ import type { DatasetConfig } from "../src/app/datasets/dataset.model.ts";
 import { normalizeQuery, type AiSnapshotFile, type SnapshotMatch } from "../src/app/lib/ai-results.ts";
 import { groupReviews } from "../src/app/lib/catalog.ts";
 import { MODEL, aiSearch, isGroqConfigured } from "../src/app/lib/groq.ts";
+import { createVectorSearch, type EmbeddingsFile } from "../src/app/lib/vector-search.ts";
 import type { Product, Review } from "../src/app/models/product.model.ts";
 
 const DATASETS: Record<string, DatasetConfig> = { beauty: BEAUTY_DATASET, health: HEALTH_DATASET };
@@ -42,6 +43,8 @@ if (!isGroqConfigured) {
 const publicDir = join(dirname(fileURLToPath(import.meta.url)), "..", "public");
 const products: Product[] = JSON.parse(readFileSync(join(publicDir, dataset.productsUrl), "utf8"));
 const reviews = groupReviews(JSON.parse(readFileSync(join(publicDir, dataset.reviewsUrl), "utf8")) as Review[]);
+// The same vector search the browser runs, reading the embeddings from disk.
+const vectors = createVectorSearch(async () => JSON.parse(readFileSync(join(publicDir, dataset.embeddingsUrl), "utf8")) as EmbeddingsFile);
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const outPath = join(publicDir, dataset.aiSnapshotsUrl);
@@ -64,11 +67,17 @@ async function main(): Promise<void> {
     if (i > 0) await sleep(PACE_MS);
     let recorded = false;
     for (let attempt = 1; attempt <= MAX_ATTEMPTS && !recorded; attempt++) {
-      const result = await aiSearch(query, products, reviews);
+      const result = await aiSearch(query, products, reviews, vectors);
       if (result.mode === "groq") {
         queries[normalizeQuery(query)] = [...result.matches.entries()]
           .sort((a, b) => b[1].score - a[1].score)
-          .map(([id, info]) => ({ id, score: info.score, directTerms: [...info.directTerms], synonymTerms: [...info.synonymTerms] }));
+          .map(([id, info]) => ({
+            id,
+            score: info.score,
+            directTerms: [...info.directTerms],
+            synonymTerms: [...info.synonymTerms],
+            ...(info.bySimilarity ? { bySimilarity: true } : {}),
+          }));
         console.log(`✓ "${query}" — ${result.matches.size} matches`);
         recorded = true;
       } else if (result.error?.includes("tokens per day")) {

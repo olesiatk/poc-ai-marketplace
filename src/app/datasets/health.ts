@@ -11,6 +11,7 @@ import type { DatasetConfig } from "./dataset.model";
 export const HEALTH_DATASET: DatasetConfig = {
   productsUrl: "data/health-products.json",
   reviewsUrl: "data/health-reviews.json",
+  embeddingsUrl: "data/health-embeddings.json",
   aiSnapshotsUrl: "data/health-ai-snapshots.json",
 
   domain: "health and personal care marketplace",

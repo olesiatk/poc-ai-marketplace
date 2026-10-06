@@ -15,6 +15,7 @@ import { groupReviews, itemFormOptions, itemForms } from "./lib/catalog";
 import { missedByKeyword, rankChanges } from "./lib/comparison";
 import { formatDate, formatPrice } from "./lib/format";
 import { aiSearch, isGroqConfigured } from "./lib/groq";
+import { createVectorSearch, type EmbeddingsFile } from "./lib/vector-search";
 import { watchIframeHeight } from "./lib/iframe-resize";
 import { isEmbedded, listenToHost, sendFrameReady, sendTourStatus } from "./lib/post-message";
 import { parseQueryFilters, type QueryFilters } from "./lib/query-filters";
@@ -76,6 +77,13 @@ export class App implements OnDestroy {
   protected readonly selected = signal<ComparisonSelection | null>(null);
 
   private aiResults: AiResults | null = null;
+  /**
+   * Semantic search for live AI queries. Its model (~23 MB) and the catalog's
+   * vectors load on first use — warmed up when the visitor focuses the search
+   * box, since preset queries and the tour come from recordings and never
+   * need it.
+   */
+  private readonly vectors = createVectorSearch(() => fetch(ACTIVE_DATASET.embeddingsUrl).then((r) => r.json() as Promise<EmbeddingsFile>));
   // Guards against a slow AI response for an older query overwriting a newer one.
   private searchSeq = 0;
   /**
@@ -205,7 +213,7 @@ export class App implements OnDestroy {
         this.filters.update((f) => ({ ...f, maxPrice: this.priceLimit() }));
         this.aiResults = new AiResults(
           snapshot,
-          aiSearch,
+          (query, list, reviewsMap) => aiSearch(query, list, reviewsMap, this.vectors),
           (query, list, reviewsMap) => localHeuristicSearch(this.queryFilters(query).text, list, reviewsMap),
           isGroqConfigured
         );
@@ -359,6 +367,10 @@ export class App implements OnDestroy {
       maxPrice !== null && `max price ${formatPrice(maxPrice)}`,
     ].filter(Boolean);
     return parts.length ? parts.join(", ") : null;
+  }
+
+  protected warmUpSearch(): void {
+    this.vectors.warmUp();
   }
 
   protected startTour(): void {

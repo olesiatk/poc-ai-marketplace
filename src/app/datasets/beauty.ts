@@ -12,6 +12,7 @@ import type { DatasetConfig } from "./dataset.model";
 export const BEAUTY_DATASET: DatasetConfig = {
   productsUrl: "data/beauty-products.json",
   reviewsUrl: "data/beauty-reviews.json",
+  embeddingsUrl: "data/beauty-embeddings.json",
   aiSnapshotsUrl: "data/beauty-ai-snapshots.json",
 
   domain: "beauty and personal care marketplace",
@@ -55,11 +56,10 @@ export const BEAUTY_DATASET: DatasetConfig = {
     // the catalog itself barely uses ("honeymoon", "sunkissed", "hangnails" —
     // 0-3 keyword hits), so AI finds more products than keyword search does.
     // The "Auto-filters" one names its filters explicitly — a price, "skin care
-    // category", "lotion form" — and the filters bar picks them all up. "ski
-    // trip" ticks every box of a convincing demo (npm run report:presets):
-    // more AI results than keyword ones, a keyword first page AI mostly
-    // filters out, many AI-only finds, two categories from the query — so
-    // it's the guided tour's demo. The rest have a visibly wrong answer on the
+    // category", "lotion form" — and the filters bar picks them all up, which
+    // makes it the guided tour's demo. "ski trip" shows AI turning a
+    // situation into products (sun and cold protection) the query never
+    // names; check any change with npm run report:presets. The rest have a visibly wrong answer on the
     // keyword side (perfumes for "without fragrance", eyeliner and pink nails
     // for "soft pink eyeshadow", SPF 4 tanning oil for "SPF 30+"); several also name a price
     // or categories the filters pick up — the gift one two categories at once.
@@ -75,5 +75,5 @@ export const BEAUTY_DATASET: DatasetConfig = {
     { query: "spoil my grandma, bath & body or skin care category", label: "Gift" },
   ],
   searchPlaceholder: 'e.g. "a hydrating serum for dry skin"',
-  demoQuery: "ski trip, skin care or makeup category",
+  demoQuery: "moisturizer under $25, skin care category, lotion form",
 };

@@ -34,6 +34,9 @@ export interface DatasetConfig {
    */
   conceptGroups: readonly (readonly string[])[];
 
+  /** Where the product embeddings for semantic search live (built by scripts/build-embeddings.ts). */
+  embeddingsUrl: string;
+
   /** Where the recorded AI results for `presetQueries` live (built by scripts/record-ai-snapshots.ts). */
   aiSnapshotsUrl: string;
 

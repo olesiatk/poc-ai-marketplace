@@ -33,10 +33,13 @@ const MAX_REASON_TERMS = 2;
 /**
  * A short "why AI matched this" line for an AI-only product: the synonym /
  * related terms it matched on, since by definition none of the literal
- * query words were enough for keyword search to find it.
+ * query words were enough for keyword search to find it — or, for one
+ * found by vector search past what the model judged, that it's close in
+ * meaning.
  */
 export function matchReason(info: MatchInfo | null | undefined): string | null {
   if (!info) return null;
+  if (info.bySimilarity) return "similar in meaning to your request";
   const terms = [...info.synonymTerms, ...info.directTerms].slice(0, MAX_REASON_TERMS);
   return terms.length ? `matched ${terms.map((t) => `"${t}"`).join(", ")}` : null;
 }

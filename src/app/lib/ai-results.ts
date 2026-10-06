@@ -6,6 +6,8 @@ export interface SnapshotMatch {
   score: number;
   directTerms: string[];
   synonymTerms: string[];
+  /** Found by meaning beyond what the model judged (see groq.ts). */
+  bySimilarity?: boolean;
 }
 
 /** Recorded real LLM results for a catalog's preset queries — built by scripts/record-ai-snapshots.ts. */
@@ -46,7 +48,10 @@ export function normalizeQuery(query: string): string {
 
 export function snapshotToMatches(entries: SnapshotMatch[]): MatchesMap {
   return new Map(
-    entries.map((m) => [m.id, { score: m.score, directTerms: new Set(m.directTerms), synonymTerms: new Set(m.synonymTerms) }])
+    entries.map((m) => [
+      m.id,
+      { score: m.score, directTerms: new Set(m.directTerms), synonymTerms: new Set(m.synonymTerms), ...(m.bySimilarity ? { bySimilarity: true } : {}) },
+    ])
   );
 }
 

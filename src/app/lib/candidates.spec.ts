@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MAX_CANDIDATES, MAX_PLAN_TERMS, MIN_CANDIDATES, RICH_CANDIDATES, buildCatalog, classifyKeywords, dropWeakMatches, parseMatches, parsePlan, selectCandidates } from "./candidates";
+import { MAX_CANDIDATES, MAX_PLAN_TERMS, MIN_CANDIDATES, RICH_CANDIDATES, similarTail, buildCatalog, classifyKeywords, dropWeakMatches, parseMatches, parsePlan, selectCandidates } from "./candidates";
 import type { Product } from "../models/product.model";
 
 function makeProduct(overrides: Partial<Product>): Product {
@@ -86,6 +86,43 @@ describe("selectCandidates", () => {
     const picked = selectCandidates("acne patch", [...strong, ...weak], {}, null);
     expect(picked.length).toBeLessThan(MAX_CANDIDATES);
     expect(picked.filter((p) => p.id.startsWith("s"))).toHaveLength(14);
+  });
+});
+
+describe("selectCandidates — with vector search", () => {
+  const sunscreen = makeProduct({ id: "sun", title: "Sport Sunscreen Lotion SPF 30" });
+  const fleece = makeProduct({ id: "fleece", title: "Ski Trip Fleece Headband" });
+  const filler = Array.from({ length: 40 }, (_, i) => makeProduct({ id: `f${i}`, title: `Filler ${i}` }));
+
+  it("brings in products close in meaning that share no word with the query", () => {
+    const similarity = new Map([["sun", 0.6], ["fleece", 0.2], ...filler.map((p) => [p.id, 0.1] as [string, number])]);
+    const ids = selectCandidates("ski trip", [fleece, sunscreen, ...filler], {}, null, similarity).map((p) => p.id);
+    expect(ids).toContain("sun");
+    expect(ids).toContain("fleece");
+  });
+
+  it("puts products that rank high both by words and by meaning first", () => {
+    const similarity = new Map([["sun", 0.6], ["fleece", 0.55]]);
+    const ids = selectCandidates("ski trip", [sunscreen, fleece, ...filler], {}, null, similarity).map((p) => p.id);
+    expect(ids[0]).toBe("fleece");
+  });
+});
+
+describe("similarTail", () => {
+  const similarity = new Map([["a", 0.7], ["b", 0.6], ["c", 0.5], ["d", 0.65], ["e", 0.4], ["f", 0.62]]);
+
+  it("adds unjudged products at least as close as the closest quarter of accepted matches", () => {
+    // Accepted 0.7, 0.6, 0.5 → the cut sits at 0.65.
+    const tail = similarTail(similarity, () => true, new Set(["a", "b", "c"]), ["a", "b", "c"]);
+    expect(tail.map((t) => t.id)).toEqual(["d"]);
+  });
+
+  it("leaves out products the model already judged, and ones the filters exclude", () => {
+    expect(similarTail(similarity, (id) => id !== "d", new Set(["a", "b", "c", "f"]), ["a", "b", "c"])).toEqual([]);
+  });
+
+  it("adds nothing when the model accepted nothing", () => {
+    expect(similarTail(similarity, () => true, new Set(), [])).toEqual([]);
   });
 });
 

@@ -10,9 +10,11 @@ import {
   parseMatches,
   parsePlan,
   selectCandidates,
+  similarTail,
   type QueryPlan,
 } from "./candidates";
 import { expandQueryTerms, localHeuristicSearch } from "./search";
+import type { VectorSearch } from "./vector-search";
 import type { AiMode, MatchesMap, Product, ReviewsMap } from "../models/product.model";
 
 const GROQ_ENDPOINT = "https://api.groq.com/openai/v1/chat/completions";
@@ -125,6 +127,16 @@ async function planQuery(query: string, products: Product[]): Promise<QueryPlan 
   }
 }
 
+/** Vector-search similarities, or null if the model or embeddings can't load (search goes on without them). */
+async function rankByMeaning(vectors: VectorSearch, text: string): Promise<Map<string, number> | null> {
+  try {
+    return await vectors.rank(text);
+  } catch (err) {
+    console.warn("Vector search unavailable, retrieving by words only:", err);
+    return null;
+  }
+}
+
 export interface AiSearchResult {
   matches: MatchesMap;
   mode: AiMode;
@@ -137,7 +149,12 @@ export interface AiSearchResult {
  * if no API key is configured or the rerank request fails for any reason,
  * so the UI always stays functional.
  */
-export async function aiSearch(query: string, products: Product[], reviews: ReviewsMap): Promise<AiSearchResult> {
+export async function aiSearch(
+  query: string,
+  products: Product[],
+  reviews: ReviewsMap,
+  vectors: VectorSearch | null = null
+): Promise<AiSearchResult> {
   if (!isGroqConfigured) {
     return { matches: localHeuristicSearch(query, products, reviews), mode: "local" };
   }
@@ -152,7 +169,12 @@ export async function aiSearch(query: string, products: Product[], reviews: Revi
     const searchText = filters.text;
     const pool = products.filter((p) => passesQueryFilters(p, filters));
     const plan = await planQuery(query, pool);
-    const candidates = selectCandidates(searchText, pool, reviews, plan);
+    // Vector search, with the plan's words: a small embedding model can't
+    // tell that a "ski trip" needs sunscreen, but "ski trip: sunscreen, lip
+    // balm, windburn…" lands right next to it. Optional — without it (no
+    // model, failed download) retrieval runs on words alone.
+    const similarity = vectors ? await rankByMeaning(vectors, plan ? `${searchText}: ${plan.terms.join(", ")}` : searchText) : null;
+    const candidates = selectCandidates(searchText, pool, reviews, plan, similarity);
     const catalog = buildCatalog(candidates, reviews, expandQueryTerms(searchText, []).tokens, plan?.terms ?? []);
 
     // Room for gpt-oss's low-effort reasoning plus the JSON answer (~300 together seen at most).
@@ -173,6 +195,26 @@ export async function aiSearch(query: string, products: Product[], reviews: Revi
       const { directTerms, synonymTerms } = classifyKeywords(searchText, cleanedKeywords, literal.get(m.id)?.directTerms ?? new Set());
       matches.set(m.id, { score: m.score, directTerms, synonymTerms });
     });
+
+    // Past what the model judged: the rest of the close-in-meaning products,
+    // below every judged match (the model's scores start at MIN_SCORE).
+    if (similarity) {
+      const inPool = new Set(pool.map((p) => p.id));
+      const tail = similarTail(similarity, (id) => inPool.has(id), new Set(catalog.ids), [...matches.keys()]);
+      const byId = new Map(pool.map((p) => [p.id, p]));
+      const tailProducts = tail.map((t) => byId.get(t.id)!);
+      const queryWords = expandQueryTerms(searchText, []).tokens;
+      const highlights = localHeuristicSearch(searchText, tailProducts, reviews, plan?.terms.length ? [[...queryWords, ...plan.terms]] : []);
+      for (const t of tail) {
+        const hit = highlights.get(t.id);
+        matches.set(t.id, {
+          score: Math.round(t.similarity * 50),
+          directTerms: hit?.directTerms ?? new Set(),
+          synonymTerms: hit?.synonymTerms ?? new Set(),
+          bySimilarity: true,
+        });
+      }
+    }
 
     return { matches, mode: "groq" };
   } catch (err) {

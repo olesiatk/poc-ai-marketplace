@@ -13,13 +13,15 @@
     "test": "ng test",
     "eval:search": "tsx scripts/eval-search.ts",
     "record:ai": "node scripts/set-env.js && tsx scripts/record-ai-snapshots.ts",
-    "report:presets": "node scripts/set-env.js && tsx scripts/preset-report.ts"
+    "report:presets": "node scripts/set-env.js && tsx scripts/preset-report.ts",
+    "embed:catalog": "tsx scripts/build-embeddings.ts"
   },
   "dependencies": {
     "@angular/common": "^22.1.0",
     "@angular/compiler": "^22.1.0",
     "@angular/core": "^22.1.0",
     "@angular/platform-browser": "^22.1.0",
+    "@huggingface/transformers": "^3.8.1",
     "driver.js": "^1.8.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
