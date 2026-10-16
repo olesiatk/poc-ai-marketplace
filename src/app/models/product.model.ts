@@ -73,4 +73,4 @@ export interface FilterOptions {
 }
 
 /** "recorded" = a stored real LLM run for a preset query (see lib/ai-results.ts). */
-export type AiMode = "groq" | "recorded" | "local" | null;
+export type AiMode = "live" | "recorded" | "local" | null;

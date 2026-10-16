@@ -1,6 +1,6 @@
 {
-  "recordedAt": "2026-10-06T11:26:15.445Z",
-  "model": "openai/gpt-oss-20b",
+  "recordedAt": "2026-10-16T11:24:30.795Z",
+  "model": "gpt-4.1-mini",
   "queries": {
     "honeymoon getaway": [
       {
@@ -8,95 +8,102 @@
         "score": 95,
         "directTerms": [],
         "synonymTerms": [
-          "romantic",
-          "aromatherapy",
-          "gift"
-        ]
-      },
-      {
-        "id": "B00AX88E0C",
-        "score": 90,
-        "directTerms": [],
-        "synonymTerms": [
-          "bath set",
-          "essential oils",
-          "gift"
-        ]
-      },
-      {
-        "id": "B07BR79NVY",
-        "score": 85,
-        "directTerms": [],
-        "synonymTerms": [
-          "massage oil",
-          "aromatherapy",
-          "relaxing"
+          "romantic personal spa gift",
+          "best wedding, anniversary, birthday or graduation gift",
+          "relaxes both body and mind",
+          "sensual"
         ]
       },
       {
         "id": "B09PF8XDQ4",
-        "score": 80,
+        "score": 90,
         "directTerms": [],
         "synonymTerms": [
-          "moisturizing",
-          "shea butter",
-          "gift set"
+          "body care gift set for her",
+          "creamy vanilla cake and warm buttery notes kissed with lemon",
+          "moisturizing shea butter shower gel & body lotion set"
+        ]
+      },
+      {
+        "id": "B00H3WGN9K",
+        "score": 85,
+        "directTerms": [],
+        "synonymTerms": [
+          "luxury handmade soap gift set",
+          "ready to gift",
+          "beautiful scented soap"
+        ]
+      },
+      {
+        "id": "B000NM7HME",
+        "score": 80,
+        "directTerms": [
+          "honeymoon"
+        ],
+        "synonymTerms": [
+          "perfume",
+          "bought it on my honeymoon cruise in hawaii"
+        ]
+      },
+      {
+        "id": "B07BR79NVY",
+        "score": 75,
+        "directTerms": [],
+        "synonymTerms": [
+          "relaxing organic body oil",
+          "aroma therapy",
+          "amazing natural scent and non greasy hydration"
+        ]
+      },
+      {
+        "id": "B01BNMR9BG",
+        "score": 70,
+        "directTerms": [],
+        "synonymTerms": [
+          "shower oil",
+          "delightful scent and so silky to use in the bath/shower"
         ]
       }
     ],
     "sunkissed": [
       {
-        "id": "B07KRRQFVV",
-        "score": 95,
-        "directTerms": [],
-        "synonymTerms": [
-          "bronzer",
-          "tanning lotion"
-        ]
-      },
-      {
-        "id": "B07DTMKTRN",
-        "score": 90,
-        "directTerms": [],
-        "synonymTerms": [
-          "tanning bed lotion",
-          "white dha bronzers"
-        ]
-      },
-      {
         "id": "B07C4J46JF",
-        "score": 88,
+        "score": 100,
         "directTerms": [],
         "synonymTerms": [
-          "baked bronzer",
-          "beautiful"
+          "creates the illusion of sun-drenched skin",
+          "sun-drenched skin",
+          "glow"
         ]
       },
       {
         "id": "B07C4TN9FX",
-        "score": 88,
+        "score": 100,
         "directTerms": [],
         "synonymTerms": [
-          "baked bronzer",
-          "rose gold"
+          "creates the illusion of sun-drenched skin",
+          "sun-drenched skin",
+          "pretty shimmer"
         ]
       },
       {
         "id": "B072YSZ23V",
-        "score": 85,
+        "score": 90,
         "directTerms": [],
         "synonymTerms": [
-          "sunset bronzer",
-          "blush palette"
+          "warm, golden shimmer bronzer",
+          "natural, glistening glow",
+          "bronzer and blush duo"
         ]
       },
       {
-        "id": "B01GUXUMZ8",
+        "id": "B0879G8G84",
         "score": 85,
         "directTerms": [],
         "synonymTerms": [
-          "self tanner",
-          "dark bronze"
+          "liquid glow illuminator",
+          "luminous, lit-from-within glow",
+          "glow"
         ]
       },
       {
@@ -104,8 +111,9 @@
         "score": 80,
         "directTerms": [],
         "synonymTerms": [
-          "highlighter creamy",
-          "color makeup"
+          "glide & glow",
+          "glowing radiance",
+          "natural healthy glowing skin"
         ]
       },
       {
@@ -113,116 +121,19 @@
         "score": 80,
         "directTerms": [],
         "synonymTerms": [
-          "highlighter & contour powder",
-          "shimmer"
+          "enhance your glow",
+          "shimmer finish",
+          "highlighter"
         ]
       },
       {
-        "id": "B0888XZVP6",
+        "id": "B01GUXUMZ8",
         "score": 80,
         "directTerms": [],
         "synonymTerms": [
-          "instant bronzer",
-          "sunscreen"
-        ]
-      },
-      {
-        "id": "B0BQL9CMBM",
-        "score": 80,
-        "directTerms": [],
-        "synonymTerms": [
-          "self tanner",
-          "easy sunless tan"
-        ]
-      },
-      {
-        "id": "B001JTF3TY",
-        "score": 80,
-        "directTerms": [],
-        "synonymTerms": [
-          "tanning lotion",
-          "accelerator"
-        ]
-      },
-      {
-        "id": "B07SQB13BY",
-        "score": 75,
-        "directTerms": [],
-        "synonymTerms": [
-          "sunscreen tanning oil",
-          "spf 4"
-        ]
-      },
-      {
-        "id": "B00C9J08MU",
-        "score": 75,
-        "directTerms": [],
-        "synonymTerms": [
-          "coconut kisses",
-          "indoor uv bed tanning"
-        ]
-      },
-      {
-        "id": "B01IDQJMMO",
-        "score": 70,
-        "directTerms": [],
-        "synonymTerms": [
-          "self tanning applicator mitt",
-          "smooth it on"
-        ]
-      },
-      {
-        "id": "B0784C2CKL",
-        "score": 70,
-        "directTerms": [],
-        "synonymTerms": [
-          "sunscreen and tanning lotion set",
-          "cruise flask"
-        ]
-      },
-      {
-        "id": "B08JS431S6",
-        "score": 70,
-        "directTerms": [],
-        "synonymTerms": [
-          "spray nozzel stick",
-          "sunscreen"
-        ]
-      },
-      {
-        "id": "B07DN61V6D",
-        "score": 70,
-        "directTerms": [],
-        "synonymTerms": [
-          "baby sunscreen lotion",
-          "spf 50"
-        ]
-      },
-      {
-        "id": "B09CWBJYZB",
-        "score": 65,
-        "directTerms": [],
-        "synonymTerms": [
-          "copper tan perfume",
-          "beachy scent"
-        ]
-      },
-      {
-        "id": "B00GDJTN3M",
-        "score": 65,
-        "directTerms": [],
-        "synonymTerms": [
-          "bronzer tanning lotion",
-          "coconut beach fragrance"
-        ]
-      },
-      {
-        "id": "B09RMHB4TZ",
-        "score": 65,
-        "directTerms": [],
-        "synonymTerms": [
-          "wash off tan mousse",
-          "coconut scent"
+          "dark bronze self tanner",
+          "dark bronze mousse",
+          "color turns out"
         ]
       }
     ],
@@ -235,18 +146,31 @@
         ],
         "synonymTerms": [
           "cuticle care",
-          "moisturizer",
-          "nail repair"
+          "nail strengthener",
+          "soothing for dry, cracked cuticles",
+          "nail repair treatment"
         ]
       },
       {
-        "id": "B0C2ML31KL",
+        "id": "B017BGJLBE",
         "score": 90,
         "directTerms": [],
         "synonymTerms": [
-          "cuticle remover",
-          "softener",
-          "water based"
+          "moisturizing skin protectant",
+          "dry cracked hands",
+          "dry hands and cuticles",
+          "ointment"
+        ]
+      },
+      {
+        "id": "B07KKZGQYZ",
+        "score": 85,
+        "directTerms": [],
+        "synonymTerms": [
+          "cracked skin relief",
+          "locks in moisture",
+          "protect cracked, dry skin",
+          "ointment"
         ]
       },
       {
@@ -256,59 +180,31 @@
         "synonymTerms": [
           "moisturizing balm",
           "cracked hands",
-          "healing"
+          "soothing roughed up fingers",
+          "dry skin"
         ]
       },
       {
-        "id": "B08KWDZ7D4",
-        "score": 21,
+        "id": "B00Z5VI9MK",
+        "score": 23,
         "directTerms": [],
-        "synonymTerms": [],
+        "synonymTerms": [
+          "nail treatment",
+          "nail-treatment",
+          "moisturizing",
+          "healing",
+          "nail care",
+          "nail-care",
+          "vitamin e",
+          "vitamin-e"
+        ],
         "bySimilarity": true
       }
     ],
     "moisturizer under $25, skin care category, lotion form": [
       {
-        "id": "B01GSGDRR2",
-        "score": 95,
-        "directTerms": [
-          "moisturizer",
-          "moisturizing"
-        ],
-        "synonymTerms": [
-          "hand and body lotion",
-          "aloe vera"
-        ]
-      },
-      {
-        "id": "B01NAGLAKH",
-        "score": 93,
-        "directTerms": [
-          "moisturizes",
-          "moisturizer",
-          "moisturizing"
-        ],
-        "synonymTerms": [
-          "intensive repair lotion",
-          "very dry skin"
-        ]
-      },
-      {
-        "id": "B0716F1XMD",
-        "score": 92,
-        "directTerms": [
-          "moisturizer",
-          "moisturizes",
-          "moisturized"
-        ],
-        "synonymTerms": [
-          "body lotion",
-          "almond glow"
-        ]
-      },
-      {
         "id": "B086WMMBPP",
-        "score": 90,
+        "score": 95,
         "directTerms": [
           "moisturizer",
           "moisturize",
@@ -316,115 +212,92 @@
           "moisturizing"
         ],
         "synonymTerms": [
+          "daily skin perfecting lotion",
           "hyaluronic acid",
-          "daily skin perfecting lotion"
+          "lotion"
         ]
       },
       {
-        "id": "B088C4SW36",
+        "id": "B01GSGDRR2",
         "score": 90,
         "directTerms": [
-          "moisturize"
+          "moisturizer",
+          "moisturizing"
         ],
         "synonymTerms": [
-          "maximum protection and hydration",
-          "aloe and vitamin e"
+          "hand and body lotion",
+          "refreshing lotion",
+          "lotion"
+        ]
+      },
+      {
+        "id": "B01NAGLAKH",
+        "score": 90,
+        "directTerms": [
+          "moisturizes",
+          "moisturizer",
+          "moisturizing"
+        ],
+        "synonymTerms": [
+          "intensive repair lotion",
+          "rich lotion",
+          "moisturizes very dry skin",
+          "lotion"
+        ]
+      },
+      {
+        "id": "B0716F1XMD",
+        "score": 85,
+        "directTerms": [
+          "moisturizer",
+          "moisturizes",
+          "moisturized"
+        ],
+        "synonymTerms": [
+          "body lotion",
+          "lotion",
+          "skin moisturizer"
         ]
       },
       {
         "id": "B017MR1ARK",
-        "score": 89,
+        "score": 80,
         "directTerms": [],
         "synonymTerms": [
           "hand & body lotion",
-          "cocoa butter"
-        ]
-      },
-      {
-        "id": "B07DN61V6D",
-        "score": 88,
-        "directTerms": [
-          "moisturizer"
-        ],
-        "synonymTerms": [
-          "baby sunscreen lotion",
-          "spf 50"
-        ]
-      },
-      {
-        "id": "B07SW7VTSY",
-        "score": 88,
-        "directTerms": [
-          "moisturizes",
-          "moisturize"
-        ],
-        "synonymTerms": [
-          "green ice aloe gel",
-          "8 fl. oz"
-        ]
-      },
-      {
-        "id": "B07SY9YCD5",
-        "score": 87,
-        "directTerms": [],
-        "synonymTerms": [
-          "sport sunscreen lotion",
-          "spf 30"
-        ]
-      },
-      {
-        "id": "B07PVQ4QBN",
-        "score": 86,
-        "directTerms": [],
-        "synonymTerms": [
-          "moisturising sun lotion",
-          "spf50"
-        ]
-      },
-      {
-        "id": "B084ZHP45Y",
-        "score": 85,
-        "directTerms": [],
-        "synonymTerms": [
-          "kids clear sunscreen lotion",
-          "water resistant"
-        ]
-      },
-      {
-        "id": "B001JTF3TY",
-        "score": 84,
-        "directTerms": [],
-        "synonymTerms": [
-          "tanning lotion",
-          "8-ounce"
+          "cocoa butter formula",
+          "lotion",
+          "daily use"
         ]
       }
     ],
     "shampoo without fragrance": [
       {
-        "id": "B01HYN6G4Y",
-        "score": 100,
-        "directTerms": [
-          "shampoo",
-          "shampoos",
-          "fragrance"
-        ],
-        "synonymTerms": [
-          "unscented",
-          "fragrance-free"
-        ]
-      },
-      {
         "id": "B071S98JST",
-        "score": 95,
+        "score": 100,
         "directTerms": [
           "shampoo",
           "fragrance",
           "fragrances"
         ],
         "synonymTerms": [
-          "fragrance free",
-          "sensitive skin"
+          "sensitive hair and scalp",
+          "holy grail of fragrance free haircare"
+        ]
+      },
+      {
+        "id": "B01HYN6G4Y",
+        "score": 95,
+        "directTerms": [
+          "shampoo",
+          "shampoos",
+          "fragrance"
+        ],
+        "synonymTerms": [
+          "unscented shampoo",
+          "completely fragrance-free",
+          "all-natural",
+          "chemical-free"
         ]
       },
       {
@@ -435,14 +308,30 @@
           "shampoos"
         ],
         "synonymTerms": [
+          "paraben & dye free",
           "unscented",
           "no residue"
+        ]
+      },
+      {
+        "id": "B07YBW9KTX",
+        "score": 80,
+        "directTerms": [
+          "shampoo",
+          "shampoos",
+          "fragrances",
+          "fragrance"
+        ],
+        "synonymTerms": [
+          "no parabens or fragrences",
+          "extra gentle for sensitive skin",
+          "plant-based"
         ]
       }
     ],
     "soft pink eyeshadow": [
       {
-        "id": "B09R826BXF",
+        "id": "B07ZM8BCNT",
         "score": 95,
         "directTerms": [
           "pink",
@@ -450,26 +339,14 @@
           "eyeshadows"
         ],
         "synonymTerms": [
-          "eyeshadow palette",
-          "highly pigmented"
-        ]
-      },
-      {
-        "id": "B07ZM8BCNT",
-        "score": 90,
-        "directTerms": [
-          "pink",
-          "eyeshadow",
-          "eyeshadows"
-        ],
-        "synonymTerms": [
           "matte",
-          "metallic"
+          "eyeshadow palette",
+          "powder"
         ]
       },
       {
         "id": "B00IIBYEKA",
-        "score": 80,
+        "score": 90,
         "directTerms": [
           "soft",
           "pink",
@@ -477,140 +354,182 @@
           "eyeshadow"
         ],
         "synonymTerms": [
-          "velvety matte",
-          "long lasting"
+          "pink posey",
+          "long lasting",
+          "velvety matte finish",
+          "crème to powder eyeshadows"
+        ]
+      },
+      {
+        "id": "B09R826BXF",
+        "score": 85,
+        "directTerms": [
+          "pink",
+          "eyeshadow",
+          "eyeshadows"
+        ],
+        "synonymTerms": [
+          "matte",
+          "metallic",
+          "eyeshadow palette",
+          "highly pigmented"
+        ]
+      },
+      {
+        "id": "B0979N5JKY",
+        "score": 80,
+        "directTerms": [
+          "soft",
+          "pink",
+          "eyeshadow",
+          "eyeshadows"
+        ],
+        "synonymTerms": [
+          "cream-to-powder",
+          "longlasting",
+          "metallic shades"
         ]
       }
     ],
     "sunscreen spf 30+ under $15": [
       {
-        "id": "B084ZHP45Y",
-        "score": 100,
-        "directTerms": [
-          "sunscreen",
-          "spf"
-        ],
-        "synonymTerms": [
-          "spf 50",
-          "kids"
-        ]
-      },
-      {
         "id": "B07SY9YCD5",
-        "score": 100,
+        "score": 95,
         "directTerms": [
           "sunscreen",
           "spf"
         ],
         "synonymTerms": [
           "spf 30",
-          "sport"
+          "broad spectrum uva/uvb protection",
+          "non-greasy",
+          "under $15"
         ]
       },
       {
         "id": "B09H61PN51",
-        "score": 100,
+        "score": 90,
         "directTerms": [
           "sunscreen",
           "spf"
         ],
         "synonymTerms": [
-          "spf 40"
+          "spf 40",
+          "no white cast",
+          "invisible sunshield sunscreen",
+          "under $15"
+        ]
+      },
+      {
+        "id": "B07DN61V6D",
+        "score": 85,
+        "directTerms": [
+          "sunscreen",
+          "sunscreens",
+          "spf"
+        ],
+        "synonymTerms": [
+          "spf 50",
+          "broad spectrum uva/uvb protection",
+          "hypoallergenic",
+          "under $15"
         ]
       },
       {
         "id": "B09314YB7P",
-        "score": 100,
+        "score": 80,
         "directTerms": [],
         "synonymTerms": [
-          "spf 50+"
+          "spf50+",
+          "uv protection",
+          "without stickiness",
+          "under $15"
         ]
       }
     ],
-    "aroma for men, under $20, fragrance category": [
+    "date night, fragrance or makeup category": [
       {
-        "id": "B08P5JFGF9",
-        "score": 98,
+        "id": "B08HTCZ6W5",
+        "score": 100,
         "directTerms": [
-          "aroma",
-          "men"
+          "date",
+          "night"
         ],
         "synonymTerms": [
-          "eau de toilette"
+          "seductive",
+          "sexy scent",
+          "lasts for a good 6 hours"
         ]
       },
       {
-        "id": "B004Z7RMNW",
-        "score": 96,
-        "directTerms": [
-          "aroma",
-          "men"
-        ],
-        "synonymTerms": [
-          "eau de toilette"
-        ]
-      },
-      {
-        "id": "B06Y3X3TX4",
-        "score": 94,
-        "directTerms": [
-          "aroma",
-          "aromas",
-          "men"
-        ],
-        "synonymTerms": [
-          "le male"
-        ]
-      },
-      {
-        "id": "B006QZO05O",
-        "score": 92,
-        "directTerms": [
-          "men"
-        ],
-        "synonymTerms": [
-          "eau de toilette"
-        ]
-      },
-      {
-        "id": "B00YE9LOLC",
+        "id": "B07HM1PWF4",
         "score": 90,
-        "directTerms": [
-          "aroma"
-        ],
-        "synonymTerms": [
-          "leather"
-        ]
-      },
-      {
-        "id": "B00YE966A6",
-        "score": 88,
         "directTerms": [],
         "synonymTerms": [
-          "tobacco vanille"
+          "fruity fragrance",
+          "long lasting",
+          "refreshing",
+          "smells amazing"
         ]
       },
       {
-        "id": "B074MFST5F",
-        "score": 70,
-        "directTerms": [
-          "aroma",
-          "men"
-        ],
+        "id": "B01I54K0ES",
+        "score": 85,
+        "directTerms": [],
         "synonymTerms": [
-          "tobacco vanille",
-          "body oil"
+          "fun, flirty, romantic",
+          "scent",
+          "hours"
         ]
       },
       {
-        "id": "B0BX4PZ2CJ",
-        "score": 68,
+        "id": "B072JG9WW8",
+        "score": 80,
         "directTerms": [
-          "men"
+          "date",
+          "night"
         ],
         "synonymTerms": [
-          "fragrance"
+          "last all night",
+          "liquid matte lipstick",
+          "lipstick"
         ]
+      },
+      {
+        "id": "B0879G8G84",
+        "score": 75,
+        "directTerms": [
+          "night"
+        ],
+        "synonymTerms": [
+          "liquid glow illuminator",
+          "makeup",
+          "luminous glow"
+        ]
+      },
+      {
+        "id": "B07LB6DYDW",
+        "score": 24,
+        "directTerms": [
+          "dates"
+        ],
+        "synonymTerms": [
+          "scents"
+        ],
+        "bySimilarity": true
+      },
+      {
+        "id": "B01I54JJB8",
+        "score": 22,
+        "directTerms": [],
+        "synonymTerms": [
+          "long-lasting",
+          "long lasting",
+          "perfume",
+          "scent",
+          "scents"
+        ],
+        "bySimilarity": true
       }
     ],
     "ski trip, skin care or makeup category": [
@@ -619,120 +538,118 @@
         "score": 95,
         "directTerms": [],
         "synonymTerms": [
-          "moisturizing",
-          "sun protection",
-          "hydrating"
+          "moisturizing sunscreen",
+          "protects skin from harmful uv rays",
+          "replenishes dry and irritated skin"
         ]
       },
       {
-        "id": "B07SY9YCD5",
+        "id": "B09H61PN51",
         "score": 90,
         "directTerms": [],
         "synonymTerms": [
-          "sport sunscreen",
-          "non-greasy",
-          "water resistant"
-        ]
-      },
-      {
-        "id": "B0937B5M24",
-        "score": 88,
-        "directTerms": [],
-        "synonymTerms": [
-          "uv sunblock",
-          "spf50",
-          "broad spectrum"
+          "invisible sunshield sunscreen",
+          "spf 40 pa+++",
+          "no white cast"
         ]
       },
       {
         "id": "B08R8XM54F",
-        "score": 85,
+        "score": 90,
         "directTerms": [],
         "synonymTerms": [
-          "uv sunscreen",
-          "spf50+",
-          "mild milk"
+          "perfect uv sunscreen",
+          "spf50+ pa++++",
+          "sunscreen"
         ]
       },
       {
-        "id": "B088C4SW36",
+        "id": "B07968N5GC",
+        "score": 85,
+        "directTerms": [
+          "trip"
+        ],
+        "synonymTerms": [
+          "after sun soothing hydrating aloe vera gel",
+          "moisturize dry or itchy skin",
+          "soothe the skin"
+        ]
+      },
+      {
+        "id": "B07N5B8WWR",
         "score": 80,
         "directTerms": [],
         "synonymTerms": [
-          "maximum protection",
-          "hydration",
-          "aloe"
+          "facial moisturizer",
+          "deep hydration",
+          "organic & 100% natural"
         ]
       },
       {
-        "id": "B0888XZVP6",
-        "score": 78,
+        "id": "B00LTFW9XQ",
+        "score": 75,
         "directTerms": [],
         "synonymTerms": [
-          "instant bronzer",
-          "sunscreen",
-          "spf8"
+          "mineral powder foundation",
+          "spf 15",
+          "hydrating"
         ]
       },
       {
-        "id": "B09MS8N42F",
+        "id": "B07C58S2JR",
         "score": 75,
-        "directTerms": [
-          "trip"
-        ],
+        "directTerms": [],
         "synonymTerms": [
-          "ice roller",
-          "skin care",
-          "reusable"
+          "hydrating foundation",
+          "nourishing liquid foundation",
+          "ultimate skincare benefits"
         ]
       },
       {
-        "id": "B09TZDYW52",
+        "id": "B0923Y9SW4",
         "score": 70,
-        "directTerms": [
-          "trip"
-        ],
+        "directTerms": [],
         "synonymTerms": [
-          "gift set",
-          "natural soap",
-          "skin care"
+          "liquid foundation cream",
+          "moisturizing",
+          "long-lasting makeup"
         ]
+      },
+      {
+        "id": "B0937B5M24",
+        "score": 22,
+        "directTerms": [],
+        "synonymTerms": [
+          "moisturizing",
+          "sunscreen",
+          "foundation"
+        ],
+        "bySimilarity": true
       }
     ],
     "spoil my grandma, bath & body or skin care category": [
       {
         "id": "B07DKRN2JP",
-        "score": 95,
+        "score": 100,
         "directTerms": [
           "grandma"
         ],
         "synonymTerms": [
-          "no scent",
+          "grandma's lye face & body soap",
           "natural moisturizing glycerin",
-          "great everyday natural face cleanser",
-          "eases itching"
+          "great natural daily facial cleanser and body",
+          "grandma loves grandma kye soap"
         ]
       },
       {
-        "id": "B00H3WGN9K",
-        "score": 90,
-        "directTerms": [],
-        "synonymTerms": [
-          "gift set",
-          "handmade soap",
-          "ready to gift",
-          "100% pure essential oils"
-        ]
-      },
-      {
-        "id": "B09TZDYW52",
+        "id": "B09QV6D983",
         "score": 85,
         "directTerms": [],
         "synonymTerms": [
-          "handmade natural rose petals soap",
-          "gift set",
-          "ready to give",
-          "natural"
+          "hand cream gift set",
+          "treat your hands to hydration and softness",
+          "luxurious hand cream set",
+          "moisturize well"
         ]
       },
       {
@@ -740,46 +657,94 @@
         "score": 80,
         "directTerms": [],
         "synonymTerms": [
-          "shea butter",
-          "body lotion set",
-          "fragrance",
-          "vanilla cake"
-        ]
-      },
-      {
-        "id": "B07BR79NVY",
-        "score": 75,
-        "directTerms": [],
-        "synonymTerms": [
-          "body oil",
-          "aromatherapy",
-          "lavender and vanilla",
-          "moisturizing"
+          "moisturizing shea butter shower gel & body lotion set",
+          "super-hydrating shea butter",
+          "body care gift set",
+          "fragrance is delicious"
         ]
       },
       {
         "id": "B01IDQSQMG",
-        "score": 70,
+        "score": 75,
         "directTerms": [
           "spoil"
         ],
         "synonymTerms": [
-          "body oil",
-          "coconut",
-          "hydrating",
-          "cheap"
+          "hydrating coconut body oil",
+          "deeply nourishing",
+          "intensely moisturizing",
+          "perfect pick-me-up for dry skin"
         ]
       },
       {
-        "id": "B00AX88E0C",
+        "id": "B08CRZ1QQV",
+        "score": 70,
+        "directTerms": [],
+        "synonymTerms": [
+          "skin care gift hydrating repair anti-aging essence",
+          "moisturizes and makes it more tender",
+          "helps to",
+          "moisturizer"
+        ]
+      },
+      {
+        "id": "B09TZDYW52",
         "score": 65,
         "directTerms": [],
         "synonymTerms": [
-          "bath set",
-          "vanilla fragrance",
-          "black orchid",
-          "gift"
+          "handmade natural rose petals soap skin care gift set",
+          "healing hydrator - face hand body"
         ]
+      },
+      {
+        "id": "B07GVSPYM3",
+        "score": 24,
+        "directTerms": [],
+        "synonymTerms": [
+          "gift set",
+          "gift-set",
+          "gently",
+          "relaxes",
+          "relax"
+        ],
+        "bySimilarity": true
+      },
+      {
+        "id": "B078LNDDRD",
+        "score": 23,
+        "directTerms": [],
+        "synonymTerms": [
+          "gift set",
+          "gift-set",
+          "moisturized",
+          "moisturizing",
+          "moisturize",
+          "hydrated",
+          "relax"
+        ],
+        "bySimilarity": true
+      },
+      {
+        "id": "B0C4HYWKH6",
+        "score": 23,
+        "directTerms": [],
+        "synonymTerms": [
+          "moisturize",
+          "hydrated",
+          "nourish",
+          "creamy"
+        ],
+        "bySimilarity": true
+      },
+      {
+        "id": "B0058A9OF4",
+        "score": 23,
+        "directTerms": [],
+        "synonymTerms": [
+          "cream",
+          "creamy"
+        ],
+        "bySimilarity": true
       }
     ]
   }

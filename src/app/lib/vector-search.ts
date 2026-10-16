@@ -10,7 +10,7 @@ import type { Product } from "../models/product.model";
  *
  * It finds products by meaning without any word in common, which keyword
  * search can't — but a model this small can't reason ("ski trip" alone
- * lands near fleece headbands, not sunscreen), so groq.ts embeds the query
+ * lands near fleece headbands, not sunscreen), so ai-search.ts embeds the query
  * together with the AI plan's words ("sunscreen, lip balm, windburn…").
  */
 

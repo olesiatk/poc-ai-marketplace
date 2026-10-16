@@ -1,11 +1,12 @@
-// Records real Groq AI search results for a catalog's preset queries into
+// Records real AI search results for a catalog's preset queries into
 // public/data/<name>-ai-snapshots.json, which the app serves for those
 // queries instead of calling the LLM live — so the comparison demo is the
 // same for every visitor and never trips the LLM rate limit.
 //
-// The Groq free tier allows about one search per minute, so this paces
-// itself (and retries after a rate-limit/invalid-JSON fallback) — expect
-// ~1 minute per query. Needs a real GROQ_API_KEY in .env.
+// Paces itself to fit a tight per-minute token limit (and retries after a
+// rate-limit/invalid-JSON fallback) — expect ~1 minute per query; lower
+// PACE_MS if the deployment allows more. Needs the AZURE_OPENAI_* settings
+// in .env.
 //
 // By default only records presets missing from an existing snapshot file
 // (and drops entries for queries that are no longer presets); pass --all
@@ -21,7 +22,8 @@ import { HEALTH_DATASET } from "../src/app/datasets/health.ts";
 import type { DatasetConfig } from "../src/app/datasets/dataset.model.ts";
 import { normalizeQuery, type AiSnapshotFile, type SnapshotMatch } from "../src/app/lib/ai-results.ts";
 import { groupReviews } from "../src/app/lib/catalog.ts";
-import { MODEL, aiSearch, isGroqConfigured } from "../src/app/lib/groq.ts";
+import { aiSearch } from "../src/app/lib/ai-search.ts";
+import { AI_MODEL } from "./direct-ai.ts";
 import { createVectorSearch, type EmbeddingsFile } from "../src/app/lib/vector-search.ts";
 import type { Product, Review } from "../src/app/models/product.model.ts";
 
@@ -35,8 +37,8 @@ if (!dataset) {
   console.error(`Usage: npm run record:ai -- <${Object.keys(DATASETS).join("|")}>`);
   process.exit(1);
 }
-if (!isGroqConfigured) {
-  console.error("No GROQ_API_KEY configured (run `node scripts/set-env.js` with a key in .env) — nothing to record.");
+if (!AI_MODEL) {
+  console.error("No AZURE_OPENAI_* settings in .env — nothing to record.");
   process.exit(1);
 }
 
@@ -68,7 +70,7 @@ async function main(): Promise<void> {
     let recorded = false;
     for (let attempt = 1; attempt <= MAX_ATTEMPTS && !recorded; attempt++) {
       const result = await aiSearch(query, products, reviews, vectors);
-      if (result.mode === "groq") {
+      if (result.mode === "live") {
         queries[normalizeQuery(query)] = [...result.matches.entries()]
           .sort((a, b) => b[1].score - a[1].score)
           .map(([id, info]) => ({
@@ -80,11 +82,6 @@ async function main(): Promise<void> {
           }));
         console.log(`✓ "${query}" — ${result.matches.size} matches`);
         recorded = true;
-      } else if (result.error?.includes("tokens per day")) {
-        // The daily budget only frees up gradually over 24 hours — retrying
-        // a minute later just burns what little is left, so stop here.
-        console.error(`✗ "${query}" — Groq's daily token limit is used up. Try again in a few hours.`);
-        process.exit(1);
       } else {
         console.log(`… "${query}" — attempt ${attempt} fell back to local (${result.error?.slice(0, 80) ?? "no error"}), retrying`);
         await sleep(PACE_MS);
@@ -98,7 +95,7 @@ async function main(): Promise<void> {
 
   // Same key order as the presets, so the file diffs cleanly.
   const ordered = Object.fromEntries(presetKeys.map((key) => [key, queries[key]]));
-  const out: AiSnapshotFile = { recordedAt: new Date().toISOString(), model: MODEL, queries: ordered };
+  const out: AiSnapshotFile = { recordedAt: new Date().toISOString(), model: AI_MODEL, queries: ordered };
   writeFileSync(outPath, JSON.stringify(out, null, 2) + "\n");
   console.log(`Wrote ${outPath}`);
 }

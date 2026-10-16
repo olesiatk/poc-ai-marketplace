@@ -153,7 +153,7 @@ function highlightForms(matcher: TermMatcher, index: ProductIndex): string[] {
  * expands the query with synonyms and contextual phrases for a lightweight
  * semantic-ish recall boost; with no groups (`[]`) it's plain keyword
  * search — the "without AI" side of the search comparison. Also used to
- * pre-select the candidates sent to Groq, and as its fallback.
+ * pre-select the candidates sent to the LLM, and as its fallback.
  */
 export function localHeuristicSearch(
   query: string,

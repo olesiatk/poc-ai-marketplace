@@ -18,7 +18,7 @@
 //   npm run report:presets -- <beauty|health> --screen "query" ["query" …]
 //       keyword side only, no API — a cheap first pass over candidate queries
 //   npm run report:presets -- <beauty|health> --try "query" ["query" …]
-//       runs live AI search for candidates (one Groq search each, ~4K tokens,
+//       runs live AI search for candidates (one AI search each, ~4.5K tokens,
 //       paced a minute apart) — nothing is recorded
 
 import { readFileSync } from "node:fs";
@@ -143,18 +143,19 @@ async function main(): Promise<void> {
     printTable(candidates.map((q) => report(q, null)));
     return;
   }
-  // --try: imported lazily so the other modes don't need a generated environment.ts.
-  const { aiSearch, isGroqConfigured } = await import("../src/app/lib/groq.ts");
+  // --try: imported lazily so the other modes don't need AI settings.
+  const { AI_MODEL } = await import("./direct-ai.ts");
+  const { aiSearch } = await import("../src/app/lib/ai-search.ts");
   const vectors = createVectorSearch(loadEmbeddings);
-  if (!isGroqConfigured) {
-    console.error("No GROQ_API_KEY configured (put one in .env) — --try needs live AI search.");
+  if (!AI_MODEL) {
+    console.error("No AZURE_OPENAI_* settings in .env — --try needs live AI search.");
     process.exit(1);
   }
   const rows: Row[] = [];
   for (const [i, query] of candidates.entries()) {
     if (i > 0) await new Promise((resolve) => setTimeout(resolve, PACE_MS));
     const result = await aiSearch(query, products, reviews, vectors);
-    if (result.mode !== "groq") console.warn(`("${query}" fell back to local search: ${result.error?.slice(0, 80) ?? "no key"})`);
+    if (result.mode !== "live") console.warn(`("${query}" fell back to local search: ${result.error?.slice(0, 80) ?? "no key"})`);
     rows.push(report(query, result.matches));
   }
   printTable(rows);

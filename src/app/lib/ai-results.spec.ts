@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { AiResults, LIVE_SEARCH_TOKENS, TOKENS_PER_MINUTE, normalizeQuery, type AiSnapshotFile, type LiveSearch } from "./ai-results";
+import { AiResults, LIVE_SEARCH_TOKENS, normalizeQuery, type AiSnapshotFile, type LiveSearch } from "./ai-results";
 import type { MatchesMap } from "../models/product.model";
 
 const SNAPSHOT: AiSnapshotFile = {
@@ -7,6 +7,9 @@ const SNAPSHOT: AiSnapshotFile = {
   model: "test-model",
   queries: { unscented: [{ id: "p-1", score: 90, directTerms: [], synonymTerms: ["fragrance-free"] }] },
 };
+
+// A tight per-minute limit, so the budget pacing actually kicks in.
+const TOKENS_PER_MINUTE = 8000;
 
 // Time for the token budget to refill `tokens`.
 const refillMs = (tokens: number) => Math.ceil((tokens / TOKENS_PER_MINUTE) * 60_000);
@@ -18,9 +21,9 @@ const localMatches: MatchesMap = new Map([["p-local", { score: 5, directTerms: n
 
 function setup(options: { snapshot?: AiSnapshotFile | null; live?: LiveSearch; liveEnabled?: boolean } = {}) {
   let now = 1_000_000;
-  const live = vi.fn(options.live ?? (async () => ({ matches: liveMatches, mode: "groq" as const })));
+  const live = vi.fn(options.live ?? (async () => ({ matches: liveMatches, mode: "live" as const })));
   const local = vi.fn(() => localMatches);
-  const results = new AiResults("snapshot" in options ? (options.snapshot ?? null) : SNAPSHOT, live, local, options.liveEnabled ?? true, () => now);
+  const results = new AiResults("snapshot" in options ? (options.snapshot ?? null) : SNAPSHOT, live, local, options.liveEnabled ?? true, TOKENS_PER_MINUTE, () => now);
   return { results, live, local, advance: (ms: number) => (now += ms) };
 }
 
@@ -43,7 +46,7 @@ describe("AiResults", () => {
 
   it("calls the LLM live for other queries, and caches the answer", async () => {
     const { results, live, advance } = setup();
-    expect((await results.search("hydrating serum", [], {})).mode).toBe("groq");
+    expect((await results.search("hydrating serum", [], {})).mode).toBe("live");
     advance(FULL_REFILL_MS);
     expect((await results.search("Hydrating  serum", [], {})).matches).toBe(liveMatches);
     expect(live).toHaveBeenCalledTimes(1);
@@ -93,7 +96,7 @@ describe("AiResults", () => {
     expect(live).toHaveBeenCalledTimes(2);
   });
 
-  it("goes straight to local search when no API key is configured", async () => {
+  it("goes straight to local search when live AI is off", async () => {
     const { results, live } = setup({ liveEnabled: false });
     const result = await results.search("q", [], {});
     expect(result.mode).toBe("local");
@@ -101,9 +104,20 @@ describe("AiResults", () => {
     expect(live).not.toHaveBeenCalled();
   });
 
+  it("stops calling the server once it says AI isn't configured", async () => {
+    const { results, live, advance } = setup({ live: async () => ({ matches: localMatches, mode: "local", notConfigured: true }) });
+    const first = await results.search("first query", [], {});
+    expect(first).toMatchObject({ mode: "local" });
+    expect(first.aiUnavailable).toBeUndefined();
+    advance(FULL_REFILL_MS);
+    expect(results.waitMs("second query")).toBe(0);
+    expect((await results.search("second query", [], {})).mode).toBe("local");
+    expect(live).toHaveBeenCalledTimes(1);
+  });
+
   it("works without any recording", async () => {
     const { results, live } = setup({ snapshot: null });
-    expect((await results.search("unscented", [], {})).mode).toBe("groq");
+    expect((await results.search("unscented", [], {})).mode).toBe("live");
     expect(live).toHaveBeenCalledTimes(1);
     expect(results.isRecorded("unscented")).toBe(false);
   });

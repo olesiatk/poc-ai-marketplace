@@ -1,20 +1,21 @@
 {
-  "name": "ai-furniture-marketplace-poc",
+  "name": "poc-marketplace-search",
   "version": "0.1.0",
   "private": true,
   "packageManager": "npm@11.17.0",
   "scripts": {
     "ng": "ng",
     "prestart": "node scripts/set-env.js",
-    "start": "ng serve",
+    "start": "node scripts/start.mjs",
     "prebuild": "node scripts/set-env.js",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "eval:search": "tsx scripts/eval-search.ts",
-    "record:ai": "node scripts/set-env.js && tsx scripts/record-ai-snapshots.ts",
-    "report:presets": "node scripts/set-env.js && tsx scripts/preset-report.ts",
-    "embed:catalog": "tsx scripts/build-embeddings.ts"
+    "record:ai": "tsx scripts/record-ai-snapshots.ts",
+    "report:presets": "tsx scripts/preset-report.ts",
+    "embed:catalog": "tsx scripts/build-embeddings.ts",
+    "dev:api": "node scripts/dev-api.mjs"
   },
   "dependencies": {
     "@angular/common": "^22.1.0",

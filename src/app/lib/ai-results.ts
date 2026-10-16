@@ -6,7 +6,7 @@ export interface SnapshotMatch {
   score: number;
   directTerms: string[];
   synonymTerms: string[];
-  /** Found by meaning beyond what the model judged (see groq.ts). */
+  /** Found by meaning beyond what the model judged (see ai-search.ts). */
   bySimilarity?: boolean;
 }
 
@@ -28,19 +28,23 @@ export interface AiResult {
   recordedAt?: string;
 }
 
-/** The shape of groq.ts's `aiSearch`, injected so this module (and its tests) don't depend on the API client. */
-export type LiveSearch = (query: string, products: Product[], reviews: ReviewsMap) => Promise<{ matches: MatchesMap; mode: AiMode; error?: string }>;
+/** The shape of ai-search.ts's `aiSearch`, injected so this module (and its tests) don't depend on the API client. */
+export type LiveSearch = (
+  query: string,
+  products: Product[],
+  reviews: ReviewsMap
+) => Promise<{ matches: MatchesMap; mode: AiMode; error?: string; notConfigured?: boolean }>;
 
-// Groq's free tier allows 8K tokens a minute, refilled continuously — a
-// token bucket (its x-ratelimit-reset-tokens header counts back up at
-// ~133 tokens/s; the browser can't read that header, so the bucket is
-// modelled here). One live AI search reserves about LIVE_SEARCH_TOKENS:
-// both prompts plus both max_tokens reservations (see groq.ts). So the
-// first search goes at once, a second right after it waits ~12 s, and
-// searches back to back settle at one per ~36 s.
-export const TOKENS_PER_MINUTE = 8000;
+// The model deployment has a per-minute token limit (TPM), refilled
+// continuously — a token bucket, modelled here because the browser can't
+// read the rate-limit headers. One live AI search reserves about
+// LIVE_SEARCH_TOKENS: both prompts plus both max_tokens reservations (see
+// ai-search.ts). The limit comes from AI_TOKENS_PER_MINUTE at build time
+// (scripts/set-env.js); at 8K, say, the first search goes at once, a
+// second right after it waits ~12 s, and searches back to back settle at
+// one per ~36 s. At typical Azure deployment limits nobody ever waits.
+export const DEFAULT_TOKENS_PER_MINUTE = 50_000;
 export const LIVE_SEARCH_TOKENS = 4800;
-const TOKENS_PER_MS = TOKENS_PER_MINUTE / 60_000;
 
 export function normalizeQuery(query: string): string {
   return query.trim().toLowerCase().replace(/\s+/g, " ");
@@ -67,21 +71,26 @@ export function snapshotToMatches(entries: SnapshotMatch[]): MatchesMap {
 export class AiResults {
   private readonly cache = new Map<string, AiResult>();
   /** Tokens left in the per-minute budget as of `budgetAt` — it starts full. */
-  private budget = TOKENS_PER_MINUTE;
+  private budget: number;
   private budgetAt: number;
+  private readonly tokensPerMs: number;
 
   constructor(
     private readonly snapshot: AiSnapshotFile | null,
     private readonly liveSearch: LiveSearch,
     private readonly localSearch: (query: string, products: Product[], reviews: ReviewsMap) => MatchesMap,
-    private readonly liveEnabled: boolean,
+    /** Turned off for good once the server says it has no AI configured. */
+    private liveEnabled: boolean,
+    private readonly tokensPerMinute: number = DEFAULT_TOKENS_PER_MINUTE,
     private readonly now: () => number = Date.now
   ) {
+    this.budget = tokensPerMinute;
     this.budgetAt = now();
+    this.tokensPerMs = tokensPerMinute / 60_000;
   }
 
   private budgetNow(): number {
-    return Math.min(TOKENS_PER_MINUTE, this.budget + (this.now() - this.budgetAt) * TOKENS_PER_MS);
+    return Math.min(this.tokensPerMinute, this.budget + (this.now() - this.budgetAt) * this.tokensPerMs);
   }
 
   private spend(tokens: number): void {
@@ -103,7 +112,7 @@ export class AiResults {
   waitMs(query: string): number {
     const key = normalizeQuery(query);
     if (this.snapshot?.queries[key] || this.cache.has(key) || !this.liveEnabled) return 0;
-    return Math.max(0, Math.ceil((LIVE_SEARCH_TOKENS - this.budgetNow()) / TOKENS_PER_MS));
+    return Math.max(0, Math.ceil((LIVE_SEARCH_TOKENS - this.budgetNow()) / this.tokensPerMs));
   }
 
   async search(query: string, products: Product[], reviews: ReviewsMap): Promise<AiResult> {
@@ -123,10 +132,14 @@ export class AiResults {
 
     this.spend(LIVE_SEARCH_TOKENS);
     const result = await this.liveSearch(query, products, reviews);
-    if (result.mode === "groq") {
-      const live: AiResult = { matches: result.matches, mode: "groq" };
+    if (result.mode === "live") {
+      const live: AiResult = { matches: result.matches, mode: "live" };
       this.cache.set(key, live);
       return live;
+    }
+    if (result.notConfigured) {
+      this.liveEnabled = false;
+      return { matches: result.matches, mode: "local" };
     }
     // Most likely a 429 — someone else on the shared key used the budget up.
     // Assume it's empty, so the next try waits for a full search's worth.

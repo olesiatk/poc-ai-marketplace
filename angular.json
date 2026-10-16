@@ -6,7 +6,7 @@
   },
   "newProjectRoot": "projects",
   "projects": {
-    "ai-furniture-marketplace-poc": {
+    "poc-marketplace-search": {
       "projectType": "application",
       "schematics": {},
       "root": "",
@@ -21,12 +21,7 @@
             "assets": [
               {
                 "glob": "**/*",
-                "input": "public",
-                "ignore": [
-                  "data/products.json",
-                  "data/reviews.json",
-                  "data/products-with-reviews.json"
-                ]
+                "input": "public"
               }
             ],
             "styles": [
@@ -59,12 +54,15 @@
         },
         "serve": {
           "builder": "@angular/build:dev-server",
+          "options": {
+            "proxyConfig": "proxy.conf.json"
+          },
           "configurations": {
             "production": {
-              "buildTarget": "ai-furniture-marketplace-poc:build:production"
+              "buildTarget": "poc-marketplace-search:build:production"
             },
             "development": {
-              "buildTarget": "ai-furniture-marketplace-poc:build:development"
+              "buildTarget": "poc-marketplace-search:build:development"
             }
           },
           "defaultConfiguration": "development"

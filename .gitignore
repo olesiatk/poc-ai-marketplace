@@ -7,15 +7,16 @@
 /bazel-out
 
 # Node
-/node_modules
+node_modules/
 npm-debug.log
 yarn-error.log
 
 # Secrets
 .env
 .env.local
+/api/local.settings.json
 # Regenerated from .env by scripts/set-env.js before every `npm start`/`npm run build`
-# (see package.json's prestart/prebuild) — never hand-edit or commit it, it holds the real key.
+# (see package.json's prestart/prebuild) — never hand-edit or commit it.
 /src/environments/environment.ts
 
 # IDEs and editors

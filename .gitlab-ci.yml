@@ -1,0 +1,49 @@
+# Tests every push; deploys the default branch to Azure Static Web Apps
+# (poc-marketplace-search-frontend): the Angular build as the site, api/
+# as its managed /api function.
+#
+# CI/CD variables (Settings > CI/CD > Variables):
+#   SWA_DEPLOYMENT_TOKEN  required, masked — the Static Web App's deployment
+#                         token (Azure portal > the SWA > Manage deployment token)
+#   AI_TOKENS_PER_MINUTE  optional — the model deployment's TPM limit (default 50000)
+# The Azure OpenAI key is NOT a CI variable: it lives in the Static Web
+# App's own environment variables, where the /api function reads it.
+
+stages:
+  - test
+  - deploy
+
+default:
+  image: node:22
+  cache:
+    key:
+      files:
+        - package-lock.json
+    paths:
+      - .npm/
+  before_script:
+    - npm ci --cache .npm --prefer-offline
+
+test:
+  stage: test
+  script:
+    - npm test -- --watch=false
+    - npm run eval:search
+    - npm run build
+
+deploy:
+  stage: deploy
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  environment:
+    name: production
+  script:
+    - npm run build
+    - npm ci --omit=dev --prefix api
+    - >
+      npx --yes @azure/static-web-apps-cli@2.0.10 deploy dist/poc-marketplace-search/browser
+      --api-location api
+      --api-language node
+      --api-version 22
+      --deployment-token "$SWA_DEPLOYMENT_TOKEN"
+      --env production

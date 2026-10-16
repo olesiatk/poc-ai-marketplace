@@ -5,13 +5,13 @@ import type { ConceptGroups } from "./synonyms";
 import type { MatchesMap, Product, ReviewsMap } from "../models/product.model";
 
 /*
- * Retrieval for AI search (see groq.ts): which products the rerank call
+ * Retrieval for AI search (see ai-search.ts): which products the rerank call
  * gets to judge, how much of each one it sees, and reading back what it
- * answered. Pure and API-free, so it's unit-testable without a Groq key.
+ * answered. Pure and API-free, so it's unit-testable without an API key.
  */
 
-// Sized so plan + rerank together fit the Groq per-minute token budget —
-// see the comment at the top of groq.ts before raising any of these.
+// Sized so plan + rerank together stay small (~4.5K tokens) — see the
+// comment at the top of ai-search.ts before raising any of these.
 export const MAX_CANDIDATES = 32;
 // The pool is cut off where retrieval scores fall away (below SCORE_FLOOR of
 // the best score), but never shorter than this, padding from the planned
@@ -38,7 +38,9 @@ export const KEYWORD_TOP = 15;
 // catalogs run to hundreds or thousands of characters each — these caps
 // keep a rich entry at roughly 150 tokens and a compact one at ~30.
 const MAX_TITLE_CHARS = 120;
-const MAX_COMPACT_TITLE_CHARS = 70;
+// Long enough to keep who a product is for ("… for Men", "… for Women"),
+// which titles tend to put at the end.
+const MAX_COMPACT_TITLE_CHARS = 100;
 const MAX_DESCRIPTION_CHARS = 160;
 const MAX_FEATURES = 2;
 const MAX_FEATURE_CHARS = 80;
@@ -95,8 +97,8 @@ function rankedIds(matches: MatchesMap): string[] {
   return [...matches.entries()].sort((a, b) => b[1].score - a[1].score).map(([id]) => id);
 }
 
-// Fusing two rankings (plan words, meaning) by position, not raw score:
-// their scores aren't comparable. Standard reciprocal-rank fusion constant.
+// Fusing rankings (plan words, meaning, the query's own words) by
+// position, not raw score: their scores aren't comparable. Standard reciprocal-rank fusion constant.
 const RRF_K = 60;
 // Vector neighbours further than this below the closest one don't make the pool.
 const VECTOR_WINDOW = 0.15;
@@ -120,6 +122,7 @@ function nearest(products: readonly Product[], similarity: ReadonlyMap<string, n
  * with the plan's terms added as synonyms of the query (cut off where scores
  * fall below SCORE_FLOOR of the best one), and, given `similarity`, the
  * products closest in meaning (vector search) — up to MAX_CANDIDATES.
+ * Ordered by all three rankings fused, keyword search's included.
  */
 export function selectCandidates(
   query: string,
@@ -148,9 +151,14 @@ export function selectCandidates(
   const byMeaning = similarity ? nearest(products, similarity) : [];
   const wordRanks = reciprocalRanks(byWords);
   const meaningRanks = reciprocalRanks(byMeaning);
-  const fused = (id: string) => (wordRanks.get(id) ?? 0) + (meaningRanks.get(id) ?? 0);
 
   const keyword = rankedIds(localHeuristicSearch(query, products, reviews, [])).slice(0, KEYWORD_TOP);
+  // The query's own words count in the order too, not just in what gets in:
+  // with broad plan terms ("perfume") every product of a category scores
+  // alike, and the one product whose review says "honeymoon" sank to a
+  // compact line at the end.
+  const keywordRanks = reciprocalRanks(keyword);
+  const fused = (id: string) => (wordRanks.get(id) ?? 0) + (meaningRanks.get(id) ?? 0) + (keywordRanks.get(id) ?? 0);
   const ids = new Set(keyword.slice(0, KEYWORD_PAGE));
   for (const id of keyword.slice(KEYWORD_PAGE)) if (inScope(byId.get(id)!) && expanded.has(id)) ids.add(id);
   for (const id of [...new Set([...byWords, ...byMeaning])].sort((a, b) => fused(b) - fused(a))) {
@@ -287,7 +295,7 @@ const MATCH_RE = /"id"\s*:\s*"?([^",}\s]+)"?\s*,\s*"score"\s*:\s*(-?\d+(?:\.\d+)
 /**
  * Reads the rerank call's {"matches": [...]} answer. With long answers the
  * model sometimes runs every match together into ONE object
- * ({"id": a, "score": …, "id": b, …}) — still valid JSON, so Groq lets it
+ * ({"id": a, "score": …, "id": b, …}) — still valid JSON, so JSON mode lets it
  * through, but JSON.parse keeps only the last duplicate key. When the text
  * holds more matches than the parse found, they're scanned out of the raw
  * text instead.

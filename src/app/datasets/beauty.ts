@@ -70,7 +70,7 @@ export const BEAUTY_DATASET: DatasetConfig = {
     { query: "shampoo without fragrance", label: "Negation" },
     { query: "soft pink eyeshadow", label: "Color" },
     { query: "sunscreen SPF 30+ under $15", label: "Numbers" },
-    { query: "aroma for men, under $20, fragrance category", label: "Budget" },
+    { query: "date night, fragrance or makeup category", label: "Mood" },
     { query: "ski trip, skin care or makeup category", label: "Occasion" },
     { query: "spoil my grandma, bath & body or skin care category", label: "Gift" },
   ],

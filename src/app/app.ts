@@ -1,5 +1,6 @@
 import { Component, ElementRef, OnDestroy, computed, inject, signal } from "@angular/core";
 import type { Driver } from "driver.js";
+import { environment } from "../environments/environment";
 import { HeroComponent } from "./components/hero/hero";
 import { FiltersBarComponent, type FilterChangeEvent } from "./components/filters-bar/filters-bar";
 import { ProductGridComponent } from "./components/product-grid/product-grid";
@@ -14,7 +15,7 @@ import { AiResults, type AiResult, type AiSnapshotFile } from "./lib/ai-results"
 import { groupReviews, itemFormOptions, itemForms } from "./lib/catalog";
 import { missedByKeyword, rankChanges } from "./lib/comparison";
 import { formatDate, formatPrice } from "./lib/format";
-import { aiSearch, isGroqConfigured } from "./lib/groq";
+import { aiSearch } from "./lib/ai-search";
 import { createVectorSearch, type EmbeddingsFile } from "./lib/vector-search";
 import { watchIframeHeight } from "./lib/iframe-resize";
 import { isEmbedded, listenToHost, sendFrameReady, sendTourStatus } from "./lib/post-message";
@@ -155,13 +156,13 @@ export class App implements OnDestroy {
     const result = this.aiResult();
     if (!result) return null;
     if (result.mode === "recorded") return `Recorded AI run · ${formatDate(result.recordedAt!)}`;
-    if (result.mode === "groq") return "Live AI";
+    if (result.mode === "live") return "Live AI";
     return result.aiUnavailable ? "AI busy · local synonyms" : "Local synonyms";
   });
 
   protected readonly statusMessage = computed(() => {
     if (!this.query()) return "";
-    if (this.aiWaitSeconds()) return `AI will search in ${this.aiWaitSeconds()} s… (the demo's free AI plan has a per-minute limit)`;
+    if (this.aiWaitSeconds()) return `AI will search in ${this.aiWaitSeconds()} s… (the demo's AI plan has a per-minute limit)`;
     if (this.isSearching()) return "AI is analyzing your query…";
     if (!this.aiResult()) return "";
     const missed = this.missedCount();
@@ -215,7 +216,8 @@ export class App implements OnDestroy {
           snapshot,
           (query, list, reviewsMap) => aiSearch(query, list, reviewsMap, this.vectors),
           (query, list, reviewsMap) => localHeuristicSearch(this.queryFilters(query).text, list, reviewsMap),
-          isGroqConfigured
+          true,
+          environment.aiTokensPerMinute
         );
         // Open straight on a comparison, so the difference is visible without typing anything.
         this.runQuery(DEFAULT_QUERY);

@@ -57,10 +57,10 @@ export class HeroComponent implements OnDestroy {
 
   protected readonly modeLabel = computed(() => {
     const mode = this.aiMode();
-    // Deliberately no specific model name here — Groq's catalog changes
-    // over time (GROQ_MODEL can be swapped independently), so a hardcoded
-    // name here would just go stale again.
-    if (mode === "groq") return "AI: Groq";
+    // Deliberately no model name here — the Azure deployment can be
+    // swapped independently (AZURE_OPENAI_DEPLOYMENT), so a hardcoded
+    // name here would just go stale.
+    if (mode === "live") return "AI: Azure OpenAI";
     if (mode === "local") return "Local AI mode";
     return null;
   });
