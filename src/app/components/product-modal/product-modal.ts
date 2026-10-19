@@ -14,6 +14,7 @@ import {
 import { IconComponent } from "../icon/icon";
 import { highlightHtml } from "../../lib/search";
 import { formatDate, formatPrice, formatRating } from "../../lib/format";
+import { reportIframeHeightNow } from "../../lib/iframe-resize";
 import { listenToHost, sendModal, sendScrollIntoView } from "../../lib/post-message";
 import type { MatchInfo, Product, Review, ReviewsMap } from "../../models/product.model";
 
@@ -86,6 +87,10 @@ export class ProductModalComponent implements OnInit, AfterViewInit, OnDestroy {
   ngOnDestroy(): void {
     document.body.style.overflow = "";
     sendModal(false);
+    // The host grew the iframe to MODAL_MIN_HEIGHT for this modal; report
+    // the real height so it shrinks back (closing a fixed overlay doesn't
+    // trigger the ResizeObserver).
+    reportIframeHeightNow();
     this.stopHostListener?.();
   }
 
