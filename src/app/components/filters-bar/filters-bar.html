@@ -1,51 +1,88 @@
-<section class="mx-auto max-w-7xl px-4 sm:px-8 pt-1 pb-1" data-tour="filters-bar">
-  <div class="bg-surface px-4 py-3 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-x-4 gap-y-3 items-end">
+<aside
+  aria-label="Filters"
+  class="bg-surface flex flex-col box-border"
+  [class]="sheet() ? 'fixed inset-0 z-40 overflow-y-auto overscroll-contain px-4 pt-4' : 'px-4 pt-4 pb-3'"
+>
+  <div class="flex items-center justify-between gap-3 min-h-8 pb-4">
+    <h2 class="display text-xl leading-none">Filters</h2>
+    <div class="flex items-center gap-4">
+      @if (hasActive()) {
+        <button type="button" class="btn-link interactive py-1.5" (click)="reset.emit()">Reset all</button>
+      }
+      @if (sheet()) {
+        <button type="button" class="btn-icon interactive" aria-label="Close filters" (click)="close.emit()">
+          <app-icon name="close" [size]="20" />
+        </button>
+      }
+    </div>
+  </div>
+
+  <div class="flex flex-col gap-2 border-t border-line py-4">
+    <span class="filter-label">
+      Category
+      @if (fromQuery().has("categories")) {
+        <span class="tag-query">From your search</span>
+      }
+    </span>
     <app-filter-select
       [id]="'f-category'"
       label="Category"
       [value]="filters().categories"
       [options]="options().categories"
       placeholder="All categories"
-      [fromQuery]="fromQuery().has('categories')"
       (valueChange)="onSelectChange('categories', $event)"
     />
+  </div>
+
+  <div class="flex flex-col gap-2 border-t border-line py-4">
+    <span class="filter-label">
+      Item form
+      @if (fromQuery().has("itemForms")) {
+        <span class="tag-query">From your search</span>
+      }
+    </span>
     <app-filter-select
       [id]="'f-item-form'"
       label="Item form"
       [value]="filters().itemForms"
       [options]="options().itemForms"
       placeholder="All forms"
-      [fromQuery]="fromQuery().has('itemForms')"
       (valueChange)="onSelectChange('itemForms', $event)"
     />
+  </div>
+
+  <div class="flex flex-col gap-2 border-t border-line py-4">
+    <span class="filter-label">Rating</span>
     <app-rating-select [id]="'f-rating'" [value]="filters().minRating" (valueChange)="onRatingChange($event)" />
-    <div>
-      <label for="f-price" class="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide mb-1">
-        Max price, $
-        @if (fromQuery().has("maxPrice")) {
-          <span class="query-tag">from your query</span>
-        }
-      </label>
+  </div>
+
+  <div class="flex flex-col gap-2 border-t border-line py-4">
+    <span class="filter-label">
+      Max price
+      @if (fromQuery().has("maxPrice")) {
+        <span class="tag-query">From your search</span>
+      }
+    </span>
+    <label class="flex flex-col gap-2 pt-1">
+      <span class="text-xl font-bold">{{ priceLabel() }}</span>
       <input
-        id="f-price"
         type="range"
+        class="price-range"
+        aria-label="Max price"
         [min]="0"
         [max]="priceLimit()"
         [step]="1"
         [value]="filters().maxPrice"
+        [style.background]="priceTrack()"
         (input)="onPriceChange($event)"
-        class="w-full"
       />
-      <output class="block mt-0.5 text-xs font-bold text-gradient-brand">{{ formatPrice(filters().maxPrice) }}</output>
-    </div>
-    <div>
-      <button
-        type="button"
-        (click)="reset.emit()"
-        class="cta-label cta-label--compact border-1 text-ink font-bold uppercase text-xs tracking-wide hover:bg-ink hover:text-white transition-colors"
-      >
-        Reset all
-      </button>
-    </div>
+      <span class="flex justify-between text-sm text-muted"><span>{{ formatPrice(0) }}</span><span>{{ formatPrice(priceLimit()) }}</span></span>
+    </label>
   </div>
-</section>
+
+  @if (sheet()) {
+    <div class="sticky bottom-0 mt-auto -mx-4 px-4 py-3 bg-surface border-t border-line">
+      <button type="button" class="btn btn-primary interactive w-full h-11" (click)="close.emit()">Show results</button>
+    </div>
+  }
+</aside>

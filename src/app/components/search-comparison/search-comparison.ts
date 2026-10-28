@@ -2,7 +2,6 @@ import { Component, computed, input, output, signal } from "@angular/core";
 import { ResultColumnComponent } from "../result-column/result-column";
 import { breakpointSignal, type Breakpoint } from "../../lib/breakpoints";
 import type { RankChange } from "../../lib/comparison";
-import { wordFormProducts } from "../../lib/search";
 import type { MatchesMap, Product } from "../../models/product.model";
 
 export type ComparisonSide = "keyword" | "ai";
@@ -12,31 +11,29 @@ export interface ComparisonSelection {
   side: ComparisonSide;
 }
 
-interface ComparisonLayout {
-  /** Tiles per row on each side. */
-  columns: number;
-  pageSize: number;
-  /** Both sides next to each other, vs. one side at a time behind a toggle. */
-  sideBySide: boolean;
+/** A piece of the summary line above the comparison; `strong` pieces are bold. */
+export interface SummaryPart {
+  text: string;
+  strong?: boolean;
 }
 
 /**
- * Per viewport width (the iframe's own, when embedded): horizontal tiles,
- * two per row in three rows once a side is wide enough for two (~275px
- * each), else one per row in six.
+ * Per viewport width (the iframe's own, when embedded): the two columns
+ * side by side once each gets ~360px next to the filters sidebar (from a
+ * 1140px-wide viewport), stacked below that, and one at a time behind tabs
+ * on phones (where the sidebar becomes a sheet).
  */
+type ComparisonLayout = "side-by-side" | "stacked" | "tabs";
 const LAYOUTS: readonly Breakpoint<ComparisonLayout>[] = [
-  { minWidth: 1200, value: { columns: 2, pageSize: 6, sideBySide: true } },
-  { minWidth: 640, value: { columns: 1, pageSize: 6, sideBySide: true } },
+  { minWidth: 1140, value: "side-by-side" },
+  { minWidth: 720, value: "stacked" },
 ];
-const PHONE_LAYOUT: ComparisonLayout = { columns: 1, pageSize: 6, sideBySide: false };
-// Where matchMedia doesn't exist (jsdom in unit tests).
-const FALLBACK_LAYOUT = LAYOUTS[1].value;
+const PAGE_SIZE = 5;
 
 /**
- * The same query run two ways, side by side: plain keyword search (the
- * "without AI" baseline — same stemming and field weights, no synonym
- * expansion, no LLM) vs. AI search. On phones one side at a time, AI first.
+ * The same query run two ways: plain keyword search (the "without AI"
+ * baseline — same stemming and field weights, no synonym expansion, no
+ * LLM) vs. AI search, under a one-line summary of the difference.
  */
 @Component({
   selector: "app-search-comparison",
@@ -50,37 +47,31 @@ export class SearchComparisonComponent {
   readonly keywordMatches = input.required<MatchesMap>();
   readonly aiMatches = input.required<MatchesMap>();
   readonly rankChanges = input.required<Map<string, RankChange>>();
-  readonly queryWordCount = input.required<number>();
-  /** Keyword results containing every query word, vs. the total containing any of them. */
-  readonly keywordAllWordsCount = input.required<number>();
+  readonly summary = input<SummaryPart[]>([]);
   readonly aiLoading = input(false);
-  /** What the AI side says while loading — e.g. a countdown to its next live search. */
-  readonly aiLoadingText = input("AI is analyzing the catalog…");
-  /** E.g. "Recorded AI run", "Live AI", "AI busy — local"; shown next to the AI heading. */
+  /** E.g. "Recorded AI run · Oct 6, 2026", "Live AI", "AI busy · local synonyms" — at the end of the summary. */
   readonly aiNote = input<string | null>(null);
 
   readonly select = output<ComparisonSelection>();
-  readonly clearQuery = output<void>();
 
-  protected readonly layout = breakpointSignal(LAYOUTS, PHONE_LAYOUT, FALLBACK_LAYOUT);
+  protected readonly pageSize = PAGE_SIZE;
+  protected readonly layout = breakpointSignal(LAYOUTS, "tabs", "side-by-side");
   protected readonly activeSide = signal<ComparisonSide>("ai");
   protected readonly hoveredId = signal<string | null>(null);
 
   protected readonly keywordEmpty = () => `No product contains the words "${this.query()}".`;
-
-  // The headline counts mean different things on the two sides — say so, or
-  // the keyword side's much bigger "any word" total reads as the better search.
-  protected readonly keywordCount = computed(() => {
-    const total = this.keywordProducts().length;
-    if (this.queryWordCount() < 2 || total === 0) return `${total} ${wordFormProducts(total)}`;
-    return `${total} with any word · ${this.keywordAllWordsCount()} with all`;
-  });
   // Nothing to compare against while the AI side is loading, or if it found nothing at all.
   protected readonly aiPicks = computed(() =>
     this.aiLoading() || this.aiMatches().size === 0 ? null : new Set(this.aiMatches().keys())
   );
+  protected readonly keywordCount = computed(() => `${this.keywordProducts().length} found`);
   protected readonly aiCount = computed(() => {
+    if (this.aiLoading()) return "…";
     const total = this.aiProducts().length;
     return total === 1 ? "1 that fits" : `${total} that fit`;
   });
+
+  protected shows(side: ComparisonSide): boolean {
+    return this.layout() !== "tabs" || this.activeSide() === side;
+  }
 }

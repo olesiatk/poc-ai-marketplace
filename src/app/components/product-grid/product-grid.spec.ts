@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { TestBed } from "@angular/core/testing";
 import { ProductGridComponent } from "./product-grid";
-import type { MatchesMap, Product } from "../../models/product.model";
+import type { Product } from "../../models/product.model";
 
 function makeProducts(count: number, prefix = "p"): Product[] {
   return Array.from({ length: count }, (_, i) => ({
@@ -22,13 +22,12 @@ function makeProducts(count: number, prefix = "p"): Product[] {
 function setup(products: Product[]) {
   const fixture = TestBed.createComponent(ProductGridComponent);
   fixture.componentRef.setInput("products", products);
-  fixture.componentRef.setInput("matches", new Map() as MatchesMap);
   fixture.detectChanges();
   return fixture;
 }
 
 function cardCount(fixture: ReturnType<typeof setup>): number {
-  return fixture.nativeElement.querySelectorAll("app-product-card").length;
+  return fixture.nativeElement.querySelectorAll("app-product-row").length;
 }
 
 function findPaginationNav(fixture: ReturnType<typeof setup>): HTMLElement | null {
@@ -37,7 +36,7 @@ function findPaginationNav(fixture: ReturnType<typeof setup>): HTMLElement | nul
 
 function findButton(fixture: ReturnType<typeof setup>, text: string): HTMLButtonElement | null {
   const buttons: HTMLButtonElement[] = Array.from(fixture.nativeElement.querySelectorAll("button"));
-  return buttons.find((b) => b.textContent?.trim() === text) ?? null;
+  return buttons.find((b) => b.textContent?.trim() === text || b.getAttribute("aria-label") === text) ?? null;
 }
 
 /**
@@ -71,57 +70,57 @@ afterEach(() => {
   window.matchMedia = originalMatchMedia;
 });
 
-// Without matchMedia (plain jsdom) the grid assumes 4 columns → 2 rows of 4 = 8 per page.
+// Without matchMedia (plain jsdom) the grid assumes 2 columns → 5 rows of 2 = 10 per page.
 describe("ProductGridComponent pagination", () => {
-  it("shows only the first 8 products by default and renders pagination", () => {
-    const fixture = setup(makeProducts(12));
-    expect(cardCount(fixture)).toBe(8);
+  it("shows only the first 10 products by default and renders pagination", () => {
+    const fixture = setup(makeProducts(14));
+    expect(cardCount(fixture)).toBe(10);
     expect(findPaginationNav(fixture)).not.toBeNull();
     expect(findButton(fixture, "2")).not.toBeNull();
   });
 
   it("shows the remaining products on page 2 and hides them from page 1", () => {
-    const fixture = setup(makeProducts(12));
+    const fixture = setup(makeProducts(14));
     findButton(fixture, "2")!.click();
     fixture.detectChanges();
     expect(cardCount(fixture)).toBe(4);
   });
 
-  it("disables Prev on the first page and Next on the last page", () => {
-    const fixture = setup(makeProducts(12));
-    expect(findButton(fixture, "‹ Prev")!.disabled).toBe(true);
-    expect(findButton(fixture, "Next ›")!.disabled).toBe(false);
+  it("disables Previous on the first page and Next on the last page", () => {
+    const fixture = setup(makeProducts(14));
+    expect(findButton(fixture, "Previous page")!.disabled).toBe(true);
+    expect(findButton(fixture, "Next page")!.disabled).toBe(false);
 
     findButton(fixture, "2")!.click();
     fixture.detectChanges();
-    expect(findButton(fixture, "‹ Prev")!.disabled).toBe(false);
-    expect(findButton(fixture, "Next ›")!.disabled).toBe(true);
+    expect(findButton(fixture, "Previous page")!.disabled).toBe(false);
+    expect(findButton(fixture, "Next page")!.disabled).toBe(true);
   });
 
-  it("resets back to page 1 when the product list changes (a new search or filter)", () => {
-    const fixture = setup(makeProducts(12));
+  it("resets back to page 1 when the product list changes (a new filter)", () => {
+    const fixture = setup(makeProducts(14));
     findButton(fixture, "2")!.click();
     fixture.detectChanges();
     expect(cardCount(fixture)).toBe(4);
 
-    fixture.componentRef.setInput("products", makeProducts(10, "q"));
+    fixture.componentRef.setInput("products", makeProducts(12, "q"));
     fixture.detectChanges();
-    expect(cardCount(fixture)).toBe(8);
-    expect(findButton(fixture, "‹ Prev")!.disabled).toBe(true);
+    expect(cardCount(fixture)).toBe(10);
+    expect(findButton(fixture, "Previous page")!.disabled).toBe(true);
   });
 
   it("shows no pagination when everything fits on one page", () => {
-    const fixture = setup(makeProducts(8));
-    expect(cardCount(fixture)).toBe(8);
+    const fixture = setup(makeProducts(10));
+    expect(cardCount(fixture)).toBe(10);
     expect(findPaginationNav(fixture)).toBeNull();
   });
 
-  it("collapses many pages into an ellipsis around the current page", () => {
+  it("collapses many pages into an ellipsis", () => {
     const fixture = setup(makeProducts(200));
     const nav = findPaginationNav(fixture)!;
     expect(nav.textContent).toContain("…");
     expect(findButton(fixture, "1")).not.toBeNull();
-    expect(findButton(fixture, "25")).not.toBeNull();
+    expect(findButton(fixture, "20")).not.toBeNull();
   });
 });
 
@@ -130,11 +129,9 @@ describe("ProductGridComponent page size follows the column count", () => {
     (fixture.nativeElement.querySelector(".grid") as HTMLElement).style.gridTemplateColumns;
 
   it.each([
-    { width: 1440, columns: 5, perPage: 10 },
-    { width: 1100, columns: 4, perPage: 8 },
-    { width: 800, columns: 3, perPage: 6 },
-    // Only two cards per row → three rows instead of two.
-    { width: 390, columns: 2, perPage: 6 },
+    { width: 1440, columns: 2, perPage: 10 },
+    { width: 900, columns: 1, perPage: 5 },
+    { width: 390, columns: 1, perPage: 5 },
   ])("$width px wide → $columns columns, $perPage per page", ({ width, columns, perPage }) => {
     stubViewportWidth(width);
     const fixture = setup(makeProducts(40));
@@ -148,11 +145,11 @@ describe("ProductGridComponent page size follows the column count", () => {
     findButton(fixture, "3")!.click(); // products 20–29
     fixture.detectChanges();
 
-    viewport.resize(1100); // 8 per page → product 20 is on page 3 (16–23)
+    viewport.resize(900); // 5 per page → product 20 is on page 5 (20–24)
     fixture.detectChanges();
-    const first = fixture.nativeElement.querySelector("app-product-card h3")?.textContent?.trim();
-    expect(cardCount(fixture)).toBe(8);
-    expect(first).toBe("Product 16");
-    expect(findButton(fixture, "3")!.getAttribute("aria-current")).toBe("page");
+    const first = fixture.nativeElement.querySelector("app-product-row [title]")?.textContent?.trim();
+    expect(cardCount(fixture)).toBe(5);
+    expect(first).toBe("Product 20");
+    expect(findButton(fixture, "5")!.getAttribute("aria-current")).toBe("page");
   });
 });

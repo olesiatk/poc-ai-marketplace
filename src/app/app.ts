@@ -2,13 +2,15 @@ import { Component, ElementRef, OnDestroy, computed, inject, signal } from "@ang
 import type { Driver } from "driver.js";
 import { environment } from "../environments/environment";
 import { HeroComponent } from "./components/hero/hero";
-import { FiltersBarComponent, type FilterChangeEvent } from "./components/filters-bar/filters-bar";
+import { IconComponent } from "./components/icon/icon";
+import { FiltersBarComponent, activeFilterCount, type FilterChangeEvent } from "./components/filters-bar/filters-bar";
 import { ProductGridComponent } from "./components/product-grid/product-grid";
 import { ProductModalComponent } from "./components/product-modal/product-modal";
 import {
   SearchComparisonComponent,
   type ComparisonSelection,
   type ComparisonSide,
+  type SummaryPart,
 } from "./components/search-comparison/search-comparison";
 import { ACTIVE_DATASET } from "./datasets/active";
 import { AiResults, type AiResult, type AiSnapshotFile } from "./lib/ai-results";
@@ -16,6 +18,7 @@ import { groupReviews, itemFormOptions, itemForms } from "./lib/catalog";
 import { missedByKeyword, rankChanges } from "./lib/comparison";
 import { formatDate, formatPrice } from "./lib/format";
 import { aiSearch } from "./lib/ai-search";
+import { isPhoneSignal } from "./lib/breakpoints";
 import { createVectorSearch, type EmbeddingsFile } from "./lib/vector-search";
 import { watchIframeHeight } from "./lib/iframe-resize";
 import { isEmbedded, listenToHost, sendFrameReady, sendTourStatus } from "./lib/post-message";
@@ -46,7 +49,7 @@ function rankedBy(products: Product[], matches: MatchesMap): Product[] {
 
 @Component({
   selector: "app-root",
-  imports: [HeroComponent, FiltersBarComponent, ProductGridComponent, ProductModalComponent, SearchComparisonComponent],
+  imports: [HeroComponent, FiltersBarComponent, IconComponent, ProductGridComponent, ProductModalComponent, SearchComparisonComponent],
   templateUrl: "./app.html",
 })
 export class App implements OnDestroy {
@@ -60,6 +63,10 @@ export class App implements OnDestroy {
   // where the iframe height isn't externally driven by us.
   protected readonly embedded = isEmbedded();
   protected readonly presets = ACTIVE_DATASET.presetQueries;
+  /** Phones: filters in a full-screen sheet behind a "Filters (n)" button, results as tabs. */
+  protected readonly phone = isPhoneSignal();
+  protected readonly filtersOpen = signal(false);
+  protected readonly tourActive = signal(false);
 
   protected readonly products = signal<Product[]>([]);
   protected readonly reviews = signal<ReviewsMap>({});
@@ -72,9 +79,6 @@ export class App implements OnDestroy {
   protected readonly isSearching = signal(false);
   /** Seconds left before the AI side can search live (the free plan's per-minute token budget); 0 = not waiting. */
   protected readonly aiWaitSeconds = signal(0);
-  protected readonly aiLoadingText = computed(() =>
-    this.aiWaitSeconds() ? `AI will search in ${this.aiWaitSeconds()} s…` : "AI is analyzing the catalog…"
-  );
   protected readonly selected = signal<ComparisonSelection | null>(null);
 
   private aiResults: AiResults | null = null;
@@ -160,27 +164,34 @@ export class App implements OnDestroy {
     return result.aiUnavailable ? "AI busy · local synonyms" : "Local synonyms";
   });
 
-  protected readonly statusMessage = computed(() => {
-    if (!this.query()) return "";
-    if (this.aiWaitSeconds()) return `AI will search in ${this.aiWaitSeconds()} s… (the demo's AI plan has a per-minute limit)`;
-    if (this.isSearching()) return "AI is analyzing your query…";
-    if (!this.aiResult()) return "";
+  /** The one-line summary above the comparison — the difference between the two sides, numbers in bold. */
+  protected readonly summary = computed<SummaryPart[]>(() => {
+    if (!this.query()) return [];
+    if (this.aiWaitSeconds()) {
+      return [{ text: `AI will search in ${this.aiWaitSeconds()} s… (the demo's AI plan has a per-minute limit)` }];
+    }
+    if (this.isSearching()) return [{ text: "Searching. AI is reading product attributes and customer reviews." }];
+    if (!this.aiResult()) return [];
     const missed = this.missedCount();
     const aiCount = this.aiProducts().length;
     const keywordCount = this.keywordProducts().length;
-    if (missed > 0) return `AI found ${missed} ${wordFormProducts(missed)} keyword search missed.`;
-    if (aiCount === 0) return "AI found nothing relevant for this query. Try rephrasing it.";
+    if (missed > 0) {
+      return [{ text: "AI found " }, { text: `${missed} ${wordFormProducts(missed)}`, strong: true }, { text: " that keyword search missed" }];
+    }
+    if (aiCount === 0) return [{ text: "AI found nothing relevant for this query. Try rephrasing it." }];
     // Nothing new, but a much shorter list — the win here is cutting the noise.
     // Say what the keyword count really is, so the bigger number doesn't read as the better search.
     if (aiCount < keywordCount) {
-      const found =
+      const found: SummaryPart[] =
         this.queryWordCount() > 1
-          ? `${keywordCount} products with any of your words (${this.keywordAllWordsCount()} with all of them)`
-          : `${keywordCount} products with your word`;
-      return `Keyword search returned ${found} — AI kept the ${aiCount} that actually fit.`;
+          ? [{ text: `${keywordCount} products`, strong: true }, { text: ` with any of your words (${this.keywordAllWordsCount()} with all of them)` }]
+          : [{ text: `${keywordCount} products`, strong: true }, { text: " with your word" }];
+      return [{ text: "Keyword search returned " }, ...found, { text: " — AI kept the " }, { text: `${aiCount}`, strong: true }, { text: " that actually fit" }];
     }
-    return "Both searches agree — AI just put the best ones first.";
+    return [{ text: "Both searches agree — AI just put the best ones first" }];
   });
+
+  protected readonly activeFilters = computed(() => activeFilterCount(this.filters(), this.priceLimit()));
 
   protected readonly selectedProduct = computed(() => {
     const sel = this.selected();
@@ -245,6 +256,8 @@ export class App implements OnDestroy {
   /** Undoes the tour's demo: closes the modal and puts the default comparison back. */
   private resetTourDemo(): void {
     this.selected.set(null);
+    this.filtersOpen.set(false);
+    this.tourActive.set(false);
     this.runQuery(DEFAULT_QUERY);
     sendTourStatus(false);
   }
@@ -257,7 +270,6 @@ export class App implements OnDestroy {
   protected onResetFilters(): void {
     this.filtersFromQuery.set(new Set());
     this.filters.set({ ...EMPTY_FILTERS, maxPrice: this.priceLimit() });
-    this.onClearQuery();
   }
 
   /** What `query` would set, out of the values the filter dropdowns offer. */
@@ -385,6 +397,8 @@ export class App implements OnDestroy {
       reset: () => this.resetTourDemo(),
       demoFilters: this.describeQueryFilters(DEMO_QUERY),
     });
+    this.filtersOpen.set(false);
+    this.tourActive.set(true);
     sendTourStatus(true);
     this.tourDriver.drive();
   }

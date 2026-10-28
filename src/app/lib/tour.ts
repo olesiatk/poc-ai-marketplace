@@ -63,10 +63,16 @@ function waitForLaidOutElement(selector: string, timeoutMs = 3000): Promise<void
 export function createTour(actions: TourActions): Driver {
   return driver({
     showProgress: true,
+    progressText: "Step {{current}} of {{total}}",
+    prevBtnText: "Back",
+    nextBtnText: "Next",
+    doneBtnText: "Done",
     animate: true,
     overlayColor: "#000",
-    overlayOpacity: 0.7,
-    popoverClass: "leobit-driver-theme",
+    overlayOpacity: 0.24,
+    stagePadding: 8,
+    stageRadius: 0,
+    popoverClass: "leobit-tour",
     // Not skipMissingElement: with it on, driver.js pre-checks whether the
     // *next* step's target already exists to decide whether to label the
     // button "Next" or "Done" — but step 6's target (the modal) is only
@@ -106,7 +112,7 @@ export function createTour(actions: TourActions): Driver {
         popover: {
           title: "Fine-tune with filters",
           description:
-            "Narrow the catalog by category, item form, rating, or price — or just say it in your query. Filters apply to both searches.",
+            "Narrow the catalog by category, item form, rating, or price — or just say it in your search. Filters apply to both searches.",
         },
       },
       {
@@ -127,7 +133,7 @@ export function createTour(actions: TourActions): Driver {
               element: '[data-tour="filters-bar"]',
               popover: {
                 title: "Filters from your words",
-                description: `AI read the query too and set the filters for you: ${actions.demoFilters} — each tagged "from your query". Change or clear them any time.`,
+                description: `AI read the search too and set the filters for you: ${actions.demoFilters} — each tagged "From your search". Change or clear them any time.`,
               },
             },
           ]
@@ -138,7 +144,7 @@ export function createTour(actions: TourActions): Driver {
         popover: {
           title: "Keyword search vs AI search",
           description:
-            'The same query, run two ways. Left: plain keyword search, the way most stores search. Right: AI search. "Found only by AI" marks products keyword search missed, "Filtered out by AI" fades the keyword results AI left out, and arrows show how AI re-ranked the rest.',
+            'The same search, run two ways. Left: plain keyword search, the way most stores search. Right: AI search. "Found only by AI" marks products keyword search missed, "Filtered out by AI" marks the keyword results AI left out, and rank tags show how AI re-ranked the rest.',
         },
       },
       {
@@ -160,7 +166,7 @@ export function createTour(actions: TourActions): Driver {
         popover: {
           title: "Highlighted matches",
           description:
-            "Exact query words are highlighted in yellow, similar or synonym terms in green — so you can see exactly why a product matched.",
+            "Exact search words are highlighted in yellow, similar or synonym terms in green — so you can see exactly why a product matched.",
         },
       },
     ],

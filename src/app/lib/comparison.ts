@@ -30,16 +30,21 @@ export function missedByKeyword(keywordIds: readonly string[], aiIds: readonly s
 
 const MAX_REASON_TERMS = 2;
 
+export interface MatchReason {
+  /** "Matched:" before the terms, or the whole line for a find by meaning. */
+  label: string;
+  terms: string[];
+}
+
 /**
- * A short "why AI matched this" line for an AI-only product: the synonym /
- * related terms it matched on, since by definition none of the literal
- * query words were enough for keyword search to find it — or, for one
- * found by vector search past what the model judged, that it's close in
- * meaning.
+ * A short "why AI matched this" line for an AI result: the synonym /
+ * related terms it matched on first (the literal query words are the
+ * keyword side's job), or, for one found by vector search past what the
+ * model judged, that it's close in meaning.
  */
-export function matchReason(info: MatchInfo | null | undefined): string | null {
+export function matchReason(info: MatchInfo | null | undefined): MatchReason | null {
   if (!info) return null;
-  if (info.bySimilarity) return "similar in meaning to your request";
+  if (info.bySimilarity) return { label: "Similar in meaning to your request", terms: [] };
   const terms = [...info.synonymTerms, ...info.directTerms].slice(0, MAX_REASON_TERMS);
-  return terms.length ? `matched ${terms.map((t) => `"${t}"`).join(", ")}` : null;
+  return terms.length ? { label: "Matched:", terms } : null;
 }

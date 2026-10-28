@@ -5,13 +5,12 @@
   (mouseleave)="hoverChange.emit(null)"
   (focus)="hoverChange.emit(product().id)"
   (blur)="hoverChange.emit(null)"
-  [class.is-paired]="paired()"
-  [class.is-ai-only]="rankBadge()?.tone === 'new'"
-  [class.is-ai-tint]="aiTint()"
-  [class.is-dimmed]="dimmed()"
-  class="product-tile bg-surface w-full h-full flex items-stretch gap-2.5 p-2 text-left cursor-pointer border border-transparent hover:[border-image:var(--gradient-brand)_1] transition-colors"
+  class="product-card interactive"
+  [class.product-card--ai]="aiSide()"
+  [class.product-card--ai-only]="aiSide() && rankBadge()?.tone === 'new'"
+  [class.product-card--paired]="paired()"
 >
-  <span class="relative shrink-0 w-16 bg-white flex items-center justify-center p-1">
+  <span class="flex-none w-24 h-24 box-border bg-white border border-line-disabled flex items-center justify-center p-1">
     @if (imageUrl() && !imageFailed()) {
       <img
         [src]="imageUrl()"
@@ -19,28 +18,50 @@
         loading="lazy"
         decoding="async"
         (error)="imageFailed.set(true)"
-        class="max-h-16 max-w-full object-contain"
+        class="max-w-full max-h-full object-contain"
       />
     } @else {
-      <span class="text-[9px] text-body text-center">No image</span>
-    }
-    @if (rank(); as r) {
-      <span class="rank-number absolute top-0 left-0">{{ r }}</span>
+      <span class="text-xs text-muted text-center">No image</span>
     }
   </span>
-  <span class="flex-1 min-w-0 flex flex-col">
+  <span class="flex-1 min-w-0 flex flex-col gap-1.5">
     @if (rankBadge(); as badge) {
-      <span class="rank-badge rank-badge--{{ badge.tone }} self-start mb-1" [title]="badge.title">{{ badge.text }}</span>
+      <span
+        class="tag"
+        [class.tag-ai]="badge.tone === 'new'"
+        [class.tag-dark]="badge.tone === 'off'"
+        [class.tag-up]="badge.tone === 'up'"
+        [class.tag-outline]="badge.tone === 'down' || badge.tone === 'same'"
+        [title]="badge.title"
+      >
+        @if (badge.tone === "new") {
+          <app-icon name="check" [size]="13" />
+        } @else if (badge.tone === "off") {
+          <app-icon name="close" [size]="13" />
+        }
+        {{ badge.text }}
+      </span>
     }
-    <span class="text-[11px] font-extrabold leading-snug line-clamp-2" [title]="product().title">{{ product().title }}</span>
+    <span class="text-[17px] font-semibold leading-[1.3] line-clamp-2" [title]="product().title">{{ product().title }}</span>
+    <span class="text-[15px] text-muted truncate">{{ product().store }}</span>
     @if (reason(); as why) {
-      <span class="block text-[10px] text-brand-dark font-semibold truncate mt-0.5" [title]="why">{{ why }}</span>
+      <span class="text-[15px] leading-[1.35] text-body line-clamp-2">
+        {{ why.label }}
+        @if (why.terms.length) {
+          <strong>
+            @for (term of why.terms; track term; let last = $last) {
+              “{{ term }}”{{ last ? "" : ", " }}
+            }
+          </strong>
+        }
+      </span>
     }
-    <span class="dim-target flex items-center justify-between gap-2 mt-auto pt-1 text-[11px]">
-      <span class="font-extrabold text-ink">{{ formatPrice(product().price) }}</span>
-      <span class="flex items-center gap-0.5 font-bold text-body whitespace-nowrap">
-        <app-icon name="star" [size]="11" class="text-brand-dark" />
-        {{ formatRating(product().averageRating) }} · {{ product().ratingCount }}
+    <span class="mt-auto pt-1 flex items-center justify-between gap-2">
+      <span class="text-xl font-bold">{{ formatPrice(product().price) }}</span>
+      <span class="flex items-center gap-1.5 text-[15px] text-body whitespace-nowrap">
+        <span class="text-green flex"><app-icon name="star" [size]="16" /></span>
+        <strong class="text-ink">{{ formatRating(product().averageRating) }}</strong>
+        ({{ reviewCount() }})
       </span>
     </span>
   </span>
