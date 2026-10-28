@@ -31,3 +31,10 @@ export function breakpointSignal<T>(table: readonly Breakpoint<T>[], narrowest: 
   inject(DestroyRef).onDestroy(() => queries.forEach((q) => q.mql.removeEventListener("change", update)));
   return current.asReadonly();
 }
+
+/** Narrower than this (the iframe's own width when embedded): filters move into a sheet, results become tabs. */
+export const PHONE_BELOW = 720;
+
+export function isPhoneSignal(): Signal<boolean> {
+  return breakpointSignal([{ minWidth: PHONE_BELOW, value: false }], true, false);
+}

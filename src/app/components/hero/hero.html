@@ -1,29 +1,25 @@
-<section class="mx-auto max-w-7xl px-4 sm:px-8 pt-5 pb-2 text-center">
-  <h1 class="text-2xl sm:text-3xl font-black uppercase leading-tight mb-1">
-    Marketplace filter
-    <!-- "with AI" and the "?" always wrap as one unit, never split across lines. -->
-    <span class="inline-flex items-center gap-3 whitespace-nowrap"><span class="text-gradient-brand">with AI</span><button
+<header class="flex flex-col gap-2 mb-5">
+  <div class="flex items-start gap-4">
+    <h1 class="display text-[clamp(24px,3vw,32px)] leading-[1.1]">Marketplace filter <span class="text-gradient">with AI</span></h1>
+    <button
       type="button"
+      class="btn-help interactive"
+      [class.btn-help--active]="tourActive()"
+      aria-label="Take a tour"
+      title="Take a tour"
       (click)="howItWorks.emit()"
-      aria-label="How it works"
-      title="How it works"
-      class="how-it-works-trigger inline-flex items-center justify-center w-4 h-4 border border-brand-dark text-brand-dark text-sm font-normal leading-none normal-case hover:bg-brand-dark hover:text-white transition-colors align-middle"
     >
       ?
-    </button></span>
-  </h1>
-  <p class="max-w-3xl mx-auto text-body text-[13px] leading-snug mb-3">
-    Describe what you need, by text or by voice — and AI will match products from the catalog based on their
-    attributes and customer reviews.
+    </button>
+  </div>
+  <p class="max-w-[720px] text-body">
+    Describe what you need, by text or by voice — and AI will match products from the catalog based on their attributes and customer reviews.
   </p>
+</header>
 
-  <form
-    (submit)="onSubmit($event)"
-    data-tour="search-form"
-    class="glass-panel relative z-30 max-w-2xl mx-auto flex items-center gap-2.5 pl-4 pr-1.5 py-1.5"
-    [class.glass-panel--error]="emptyQueryError()"
-  >
-    <app-icon name="search" [size]="20" class="text-body shrink-0" />
+<form class="relative z-30" (submit)="onSubmit($event)" data-tour="search-form">
+  <div class="search-field" [class.search-field--listening]="isListening()" [class.search-field--error]="emptyQueryError()">
+    <span class="flex text-muted"><app-icon name="search" [size]="24" /></span>
     <input
       type="text"
       [value]="value()"
@@ -32,99 +28,89 @@
       (blur)="onBlur()"
       (keydown.escape)="onEscape()"
       autocomplete="off"
-      [placeholder]="placeholder"
+      aria-label="Describe what you need"
+      [placeholder]="isListening() ? 'Listening…' : placeholder"
       [attr.aria-invalid]="emptyQueryError() ? true : null"
-      class="flex-1 min-w-0 border-none outline-none bg-transparent text-[15px] placeholder:text-neutral-400"
+      class="flex-1 min-w-0 h-10 border-0 outline-none bg-transparent text-[17px] placeholder:text-muted"
     />
     @if (value()) {
-      <button
-        type="button"
-        (click)="onClear()"
-        aria-label="Clear search"
-        title="Clear search"
-        class="shrink-0 w-7 h-7 flex items-center justify-center text-body hover:text-ink"
-      >
-        <app-icon name="close" [size]="16" />
+      <button type="button" class="interactive flex-none w-10 h-10 flex items-center justify-center text-muted hover:bg-black/[0.08]" aria-label="Clear search" title="Clear search" (click)="onClear()">
+        <app-icon name="close" [size]="22" />
       </button>
     }
     <button
       type="button"
-      (click)="onMicClick()"
-      title="Voice search"
-      aria-label="Voice search"
+      class="mic interactive flex-none w-10 h-10 flex items-center justify-center"
+      [class.mic--on]="isListening()"
+      aria-label="Search by voice"
+      title="Search by voice"
       data-tour="mic-button"
-      class="shrink-0 w-9 h-9 flex items-center justify-center transition-colors"
-      [class]="isListening() ? 'bg-[#e0442e] text-white animate-mic-pulse' : 'bg-surface text-ink hover:bg-neutral-200'"
+      (click)="onMicClick()"
     >
-      <app-icon name="mic" [size]="18" />
+      <app-icon name="mic" [size]="22" />
     </button>
     <!-- Never disabled while searching: a disabled submit button also blocks
          Enter in the field, and a new query must always be able to replace
          the one in progress (or waiting for its live-search turn). -->
-    <button
-      type="submit"
-      class="cta-label shrink-0 bg-gradient-brand transition-color text-white hover:text-ink uppercase text-xs tracking-wide"
-      [class.opacity-80]="isSearching()"
-    >
-      {{ isSearching() ? "Searching…" : "AI Search" }}
-    </button>
-
-    @if (suggestions().length > 0) {
-      <ul class="glass-panel glass-panel--opaque absolute top-full left-0 right-0 mt-1.5 text-left z-10 max-h-80 overflow-y-auto">
-        @for (suggestion of suggestions(); track suggestion.query) {
-          <li>
-            <button
-              type="button"
-              (mousedown)="$event.preventDefault()"
-              (click)="selectSuggestion(suggestion)"
-              class="w-full flex items-center gap-2.5 px-5 py-2.5 text-[14px] text-left hover:bg-surface transition-colors"
-            >
-              <app-icon name="search" [size]="14" class="text-body shrink-0" />
-              <span class="truncate">{{ typedPart(suggestion) }}<strong class="text-ink font-bold">{{ suggestion.completion }}</strong></span>
-            </button>
-          </li>
-        }
-      </ul>
-    }
-  </form>
-
-  @if (presets().length) {
-    <div class="preset-row max-w-6xl mx-auto mt-2 flex items-center gap-1.5 overflow-x-auto sm:flex-wrap sm:overflow-visible" data-tour="presets">
-      <span class="shrink-0 text-[11px] font-bold uppercase tracking-wide text-body">Try:</span>
-      @for (preset of presets(); track preset.query) {
-        <button
-          type="button"
-          (click)="pickPreset.emit(preset.query)"
-          [title]="preset.label + ' example'"
-          [attr.aria-pressed]="isActivePreset(preset)"
-          class="preset-chip"
-          [class.preset-chip--active]="isActivePreset(preset)"
-        >
-          <span class="preset-chip__label">{{ preset.label }}</span>{{ preset.query }}
-        </button>
-      }
-    </div>
-  }
-
-  <div class="max-w-2xl mx-auto mt-1.5 min-h-[18px] text-[13px] font-semibold flex items-center justify-center gap-3 flex-wrap">
-    @if (emptyQueryError()) {
-      <span class="text-[#b3441f]">Type something to search for — the field is empty.</span>
-    }
-    @if (statusMessage()) {
-      <span class="text-gradient-brand">{{ statusMessage() }}</span>
-    }
-    @if (voiceError() === "not-supported") {
-      <span class="text-[#b3441f]">
-        Voice input isn't supported in this browser. Try Chrome, or type your query instead.
-      </span>
-    }
-    @if (voiceError() && voiceError() !== "not-supported") {
-      <span class="text-[#b3441f]">Voice input error: {{ voiceError() }}</span>
-    }
-    @if (modeLabel(); as label) {
-      <span class="text-[11px] font-bold uppercase tracking-wide bg-surface text-ink px-2.5 py-1">
-        {{ label }}
-      </span>
+    @if (!phone()) {
+      <button type="submit" class="btn btn-primary interactive">AI Search</button>
     }
   </div>
-</section>
+  @if (phone()) {
+    <button type="submit" class="btn btn-primary interactive w-full h-11 mt-2">AI Search</button>
+  }
+
+  @if (suggestions().length > 0) {
+    <ul class="absolute left-0 right-0 top-[calc(100%+4px)] z-20 bg-white border border-line shadow-[var(--shadow-pop)] py-2 max-h-80 overflow-y-auto">
+      <li class="px-5 py-2 text-[13px] font-bold uppercase tracking-[0.04em] text-muted" aria-hidden="true">Suggestions</li>
+      @for (suggestion of suggestions(); track suggestion.query) {
+        <li>
+          <button
+            type="button"
+            (mousedown)="$event.preventDefault()"
+            (click)="selectSuggestion(suggestion)"
+            class="interactive w-full min-h-12 flex items-center gap-3.5 px-5 text-[17px] text-left hover:bg-surface"
+          >
+            <span class="flex text-muted"><app-icon name="search" [size]="20" /></span>
+            <span class="truncate">{{ typedPart(suggestion) }}<strong>{{ suggestion.completion }}</strong></span>
+          </button>
+        </li>
+      }
+    </ul>
+  }
+</form>
+
+@if (isListening()) {
+  <p class="mt-2.5 flex items-center gap-2 font-semibold text-red">
+    <span class="w-2.5 h-2.5 rounded-full bg-red"></span>Listening. Speak now, or press the microphone again to stop.
+  </p>
+}
+@if (emptyQueryError()) {
+  <p class="mt-2.5 font-semibold text-red">Type something to search for — the field is empty.</p>
+}
+@if (voiceError() === "not-supported") {
+  <p class="mt-2.5 font-semibold text-red">Voice input isn't supported in this browser. Try Chrome, or type your query instead.</p>
+} @else if (voiceError()) {
+  <p class="mt-2.5 font-semibold text-red">Voice input error: {{ voiceError() }}</p>
+}
+
+@if (presets().length) {
+  <div class="mt-3 flex flex-wrap items-center gap-2" [class.chips--scroll]="phone()" data-tour="presets">
+    @for (preset of shownPresets(); track preset.query) {
+      <button
+        type="button"
+        class="chip interactive"
+        [class.chip--active]="isActivePreset(preset)"
+        [attr.aria-pressed]="isActivePreset(preset)"
+        (click)="pickPreset.emit(preset.query)"
+      >
+        <span class="chip__tag">{{ preset.label }}</span><span class="min-w-0">{{ preset.query }}</span>
+      </button>
+    }
+    @if (!phone() && presets().length > COLLAPSED_PRESETS) {
+      <button type="button" class="btn-link interactive min-h-9 px-2 text-[15px]" (click)="presetsExpanded.update((v) => !v)">
+        {{ presetsExpanded() ? "Show fewer" : "Show " + (presets().length - COLLAPSED_PRESETS) + " more" }}
+      </button>
+    }
+  </div>
+}

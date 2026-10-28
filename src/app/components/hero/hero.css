@@ -1,35 +1,66 @@
-/* The one deliberate exception to the app-wide sharp-corners rule — a
-   round "?" tour-trigger badge, matching the help-icon convention used
-   across other POCs on the site, in the app's own brand green. */
-.how-it-works-trigger {
-  border-radius: 50% !important;
+/* Search field: 1px grey border; focused, a 2px brand-gradient border;
+   listening, a 2px red one. The padding drops by the extra border width so
+   nothing inside shifts. */
+.search-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 4px 4px 16px;
+  border: 1px solid transparent;
+  background:
+    linear-gradient(#fff, #fff) padding-box,
+    linear-gradient(var(--color-line), var(--color-line)) border-box;
+  box-shadow: var(--shadow-sm);
+}
+.search-field:focus-within,
+.search-field--listening,
+.search-field--error {
+  border-width: 2px;
+  padding: 3px 3px 3px 15px;
+}
+.search-field:focus-within {
+  background:
+    linear-gradient(#fff, #fff) padding-box,
+    var(--gradient-brand) border-box;
+}
+.search-field--listening,
+.search-field--listening:focus-within,
+.search-field--error,
+.search-field--error:focus-within {
+  background:
+    linear-gradient(#fff, #fff) padding-box,
+    linear-gradient(var(--color-red), var(--color-red)) border-box;
 }
 
-/* Frosted-glass search bar / suggestions dropdown — translucent, blurred
-   backdrop, and a soft light rim instead of the app's usual solid white
-   fill + heavy 2px black border. */
-.glass-panel {
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.7);
-  box-shadow:
-    0 8px 32px rgba(23, 23, 23, 0.14),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+.mic {
+  background: var(--color-surface);
+  color: var(--color-ink);
+}
+.mic:hover {
+  background: var(--color-line);
+}
+.mic--on,
+.mic--on:hover {
+  background: var(--color-red);
+  color: #fff;
+}
+.mic--on:hover {
+  background: var(--color-red-dark);
 }
 
-/* The suggestions list needs more opacity than the input bar for the
-   list-item text underneath to stay comfortably readable. */
-.glass-panel--opaque {
-  background: rgba(255, 255, 255, 0.88);
+/* Phones: one row of chips that scrolls sideways, bleeding to the screen edges. */
+.chips--scroll {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  margin-left: -24px;
+  margin-right: -24px;
+  padding: 0 24px 4px;
+  scrollbar-width: none;
 }
-
-/* Search bar tinted red on an empty-query submit attempt — same rim/glow
-   treatment as .glass-panel, just re-colored to match the error message
-   text color (#b3441f) shown below the bar. */
-.glass-panel--error {
-  border-color: rgba(179, 68, 31, 0.55);
-  box-shadow:
-    0 8px 32px rgba(179, 68, 31, 0.16),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+.chips--scroll::-webkit-scrollbar {
+  display: none;
+}
+.chips--scroll .chip {
+  flex: none;
+  white-space: nowrap;
 }

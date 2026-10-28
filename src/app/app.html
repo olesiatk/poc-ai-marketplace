@@ -1,14 +1,14 @@
 @if (loadError(); as error) {
-  <div [class.min-h-screen]="!embedded" class="flex items-center justify-center text-body text-sm p-8 text-center">
+  <div [class.min-h-screen]="!embedded" class="flex items-center justify-center p-8 text-center text-body">
     Failed to load the catalog: {{ error }}
   </div>
 } @else {
   <div [class.min-h-screen]="!embedded">
-    <main>
+    <main class="max-w-[1200px] mx-auto p-6 box-border">
       <app-hero
         [(value)]="searchValue"
-        [isSearching]="isSearching()"
-        [statusMessage]="statusMessage()"
+        [phone]="phone()"
+        [tourActive]="tourActive()"
         [vocabulary]="searchVocabulary()"
         [presets]="presets"
         [activeQuery]="query()"
@@ -18,40 +18,56 @@
         (howItWorks)="startTour()"
         (searchFocus)="warmUpSearch()"
       />
-      <app-filters-bar
-        [options]="filterOptions()"
-        [filters]="filters()"
-        [priceLimit]="priceLimit()"
-        [fromQuery]="filtersFromQuery()"
-        (filterChange)="onFilterChange($event)"
-        (reset)="onResetFilters()"
-      />
-      @if (query()) {
-        <app-search-comparison
-          [query]="query()"
-          [keywordProducts]="keywordProducts()"
-          [aiProducts]="aiProducts()"
-          [keywordMatches]="keywordMatches()"
-          [aiMatches]="aiMatches()"
-          [rankChanges]="rankChanges()"
-          [queryWordCount]="queryWordCount()"
-          [keywordAllWordsCount]="keywordAllWordsCount()"
-          [aiLoading]="isSearching()"
-          [aiLoadingText]="aiLoadingText()"
-          [aiNote]="aiNote()"
-          (select)="onSelect($event.id, $event.side)"
-          (clearQuery)="onClearQuery()"
-        />
-      } @else {
-        <app-product-grid
-          [products]="browseProducts()"
-          [matches]="aiMatches()"
-          [query]="query()"
-          [isSearching]="isSearching()"
-          (select)="onSelect($event)"
-          (clearQuery)="onClearQuery()"
-        />
-      }
+
+      <div class="mt-8 flex gap-6 items-start" [class.flex-col]="phone()">
+        @if (!phone() || filtersOpen()) {
+          <app-filters-bar
+            [class]="phone() ? '' : 'flex-[1_1_260px] max-w-[300px] min-w-0'"
+            [attr.data-tour]="phone() ? null : 'filters-bar'"
+            [options]="filterOptions()"
+            [filters]="filters()"
+            [priceLimit]="priceLimit()"
+            [fromQuery]="filtersFromQuery()"
+            [sheet]="phone()"
+            (filterChange)="onFilterChange($event)"
+            (reset)="onResetFilters()"
+            (close)="filtersOpen.set(false)"
+          />
+        }
+
+        <div class="flex-[999_1_560px] min-w-0 self-stretch flex flex-col gap-6">
+          @if (phone()) {
+            <button
+              type="button"
+              class="dropdown-trigger interactive font-semibold"
+              data-tour="filters-bar"
+              (click)="filtersOpen.set(true)"
+            >
+              <span class="flex items-center gap-2.5">
+                <app-icon name="filter" [size]="20" />
+                Filters{{ activeFilters() ? " (" + activeFilters() + ")" : "" }}
+              </span>
+              <app-icon name="chevron-down" [size]="24" />
+            </button>
+          }
+          @if (query()) {
+            <app-search-comparison
+              [query]="query()"
+              [keywordProducts]="keywordProducts()"
+              [aiProducts]="aiProducts()"
+              [keywordMatches]="keywordMatches()"
+              [aiMatches]="aiMatches()"
+              [rankChanges]="rankChanges()"
+              [summary]="summary()"
+              [aiLoading]="isSearching()"
+              [aiNote]="aiNote()"
+              (select)="onSelect($event.id, $event.side)"
+            />
+          } @else {
+            <app-product-grid [products]="browseProducts()" (select)="onSelect($event)" (resetFilters)="onResetFilters()" />
+          }
+        </div>
+      </div>
     </main>
     @if (selectedProduct(); as product) {
       <app-product-modal

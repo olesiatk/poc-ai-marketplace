@@ -1,64 +1,40 @@
-<div class="flex items-baseline justify-between gap-2 min-h-9" [class]="side() === 'ai' ? 'mb-2.5' : 'mb-2 pb-1.5 border-b-2 border-[#d4d4d4]'">
-  <div class="min-w-0">
-    <p class="text-[12px] font-extrabold uppercase tracking-wide" [class.text-gradient-brand]="side() === 'ai'">
-      {{ heading() }}
-      <span class="font-bold normal-case tracking-normal" [class]="side() === 'ai' ? 'text-brand-dark' : 'text-body'">
-        · {{ loading() ? "…" : countText() }}
-      </span>
-    </p>
-    <p class="text-[10px] text-body leading-tight">{{ subheading() }}</p>
+<div class="h-[3px]" [class]="side() === 'ai' ? 'bg-[image:var(--gradient-brand)]' : 'bg-ink'"></div>
+<div class="flex flex-col gap-1.5 min-h-[52px] my-1">
+  <div class="flex items-center flex-wrap gap-x-3 gap-y-2">
+    <h2 class="display text-xl">{{ heading() }}</h2>
+    <span class="count-tag" [class.count-tag--ai]="side() === 'ai'">{{ countText() }}</span>
   </div>
-  @if (note(); as n) {
-    <span class="shrink-0 text-[9px] font-bold uppercase tracking-wide bg-surface text-ink px-1.5 py-0.5">{{ n }}</span>
-  }
+  <p class="flex flex-col text-[15px] text-muted">
+    @for (line of subheading(); track $index) {
+      <span>{{ line }}</span>
+    }
+  </p>
 </div>
 
 @if (loading()) {
-  <output class="flex flex-col items-center justify-center gap-2 py-12">
-    <div class="w-7 h-7 border-4 border-line border-t-brand-dark rounded-full animate-spin"></div>
-    <p class="text-xs text-body">{{ loadingText() }}</p>
+  <output class="flex flex-col gap-3">
+    <span class="text-lg font-semibold">Searching. AI is reading product attributes and customer reviews.</span>
+    @for (n of [1, 2, 3]; track n) {
+      <span class="h-[120px] bg-surface animate-pulse"></span>
+    }
   </output>
 } @else if (products().length === 0) {
-  <p class="bg-surface text-center text-body text-xs px-4 py-10">{{ emptyText() }}</p>
+  <p class="border border-line p-6 text-body">{{ emptyText() }}</p>
 } @else {
-  <div class="grid gap-2" [style.grid-template-columns]="'repeat(' + columns() + ', minmax(0, 1fr))'">
-    @for (item of visible(); track item.product.id) {
-      <app-product-row
-        [product]="item.product"
-        [aiTint]="side() === 'ai'"
-        [rank]="item.rank"
-        [rankChange]="changeFor(item.product.id)"
-        [dimmed]="isDimmed(item.product.id)"
-        [reason]="reasonFor(item.product.id)"
-        [paired]="hoveredId() === item.product.id"
-        [attr.data-tour]="tourTarget() && $index === 0 ? tourTarget() : null"
-        (select)="select.emit($event)"
-        (hoverChange)="hoverChange.emit($event)"
-      />
-    }
-  </div>
-
+  @for (product of visible(); track product.id) {
+    <app-product-row
+      [product]="product"
+      [aiSide]="side() === 'ai'"
+      [rankChange]="changeFor(product.id)"
+      [filteredOut]="isFilteredOut(product.id)"
+      [reason]="reasonFor(product.id)"
+      [paired]="hoveredId() === product.id"
+      [attr.data-tour]="tourTarget() && $index === 0 ? tourTarget() : null"
+      (select)="select.emit($event)"
+      (hoverChange)="hoverChange.emit($event)"
+    />
+  }
   @if (totalPages() > 1) {
-    <nav class="flex items-center justify-center gap-2 mt-2.5" [attr.aria-label]="heading() + ' pages'">
-      <button
-        type="button"
-        (click)="goTo(page() - 1)"
-        [disabled]="page() === 1"
-        aria-label="Previous page"
-        class="w-7 h-7 text-xs font-bold border border-ink disabled:opacity-30 disabled:cursor-not-allowed hover:enabled:bg-ink hover:enabled:text-white transition-colors"
-      >
-        ‹
-      </button>
-      <span class="text-[11px] font-bold text-body min-w-12 text-center">{{ page() }} / {{ totalPages() }}</span>
-      <button
-        type="button"
-        (click)="goTo(page() + 1)"
-        [disabled]="page() === totalPages()"
-        aria-label="Next page"
-        class="w-7 h-7 text-xs font-bold border border-ink disabled:opacity-30 disabled:cursor-not-allowed hover:enabled:bg-ink hover:enabled:text-white transition-colors"
-      >
-        ›
-      </button>
-    </nav>
+    <app-pager [page]="page()" [total]="totalPages()" [label]="heading() + ' pages'" (pageChange)="page.set($event)" />
   }
 }

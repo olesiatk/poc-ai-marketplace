@@ -1,31 +1,39 @@
 @import "tailwindcss";
 @import "driver.js/dist/driver.css";
 
+/* Leobit PoC design tokens (see the PoC component spec): one brand green,
+   the brand gradient, ink/grey text, 1px #D2D2D2 borders, square corners. */
 @theme {
-  --color-ink: #171717;
-  --color-brand: #97cf00;
-  --color-brand-dark: #409717;
-  --color-surface: #eeefef;
-  --color-line: #dedcd7;
-  --color-body: #55564f;
-  --color-highlight: #ffe066;
-  --color-highlight-line: #f2d774;
-  --color-highlight-synonym: #bbf7d0;
-  --font-sans: "Source Sans Pro";
-  --font-heading: "Futura Now Extra Black", Futura, var(--font-sans);
-  --font-cta: var(--font-heading);
+  --color-ink: #1e1e1e;
+  --color-body: #4b4b4b;
+  --color-muted: #626262;
+  --color-disabled: #a5a5a5;
+  --color-line: #d2d2d2;
+  --color-line-disabled: #e3e3e3;
+  --color-surface: #f5f5f5;
+  --color-green: #57b12d;
+  --color-green-dark: #3e8a1c;
+  --color-ai-surface: #f4faef;
+  --color-ai-tag: #d3f0cc;
+  --color-red: #db423b;
+  --color-red-dark: #b0322d;
+  --color-highlight: #fdeb9a;
+  --color-highlight-synonym: #c9ecb9;
+  --font-sans: "Source Sans Pro", sans-serif;
+  --font-display: "Futura Now Extra Black", Futura, "Source Sans Pro", sans-serif;
 }
 
 :root {
-  --gradient-brand: linear-gradient(130deg, rgb(151, 207, 0) -15%, rgb(36, 180, 0) 109%);
+  --gradient-brand: linear-gradient(130deg, #97cf00 -14.98%, #24b400 109.44%);
+  --gradient-brand-hover: linear-gradient(130deg, #86b800 -14.98%, #1e9600 109.44%);
+  --gradient-tint: linear-gradient(130deg, #f5fae6, #e9f7e6);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06), 0 2px 8px rgba(0, 0, 0, 0.06);
+  --shadow-pop: 0 8px 24px rgba(0, 0, 0, 0.12);
+  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.2);
+  --ease: 120ms ease-in-out;
 }
 
-/* Self-hosted "Futura Now Extra Black" (licensed, not on any free CDN).
-   Drop the font file at public/fonts/FuturaNowExtraBlack.woff2 (exact
-   name below) and it's served to every visitor regardless of what's
-   installed on their machine. Until that file exists, this @font-face
-   just fails to match and --font-heading below falls through to
-   "Futura" (if locally installed) or "Source Sans Pro". */
+/* Self-hosted "Futura Now Extra Black" (licensed, not on any free CDN). */
 @font-face {
   font-family: "Futura Now Extra Black";
   src: url("/fonts/FuturaNowExtraBlack.woff2") format("woff2");
@@ -37,9 +45,11 @@
 html,
 body,
 app-root {
-  background: rgb(249, 249, 249);
+  background: #fff;
   color: var(--color-ink);
   font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.4;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -58,451 +68,578 @@ h3,
 h4,
 h5,
 h6 {
-  font-family: var(--font-heading);
-  /* Baseline weight so headings stay Black even if a Tailwind weight
-     utility is ever missing from a specific element — the "Extra Black"
-     look shouldn't depend on remembering to add font-black every time. */
-  font-weight: 900;
+  margin: 0;
 }
 
-* {
-  border-radius: 0 !important;
-}
-
-/* Always show a pointer cursor on clickable elements — enabled buttons
-   default to this in most browsers already, but not reliably everywhere
-   (e.g. Safari on some inputs), so make it explicit. A disabled control
-   gets not-allowed instead, since it visually shouldn't invite a click. */
 a,
 button:not(:disabled),
-[role="button"]:not([aria-disabled="true"]) {
+[role="button"]:not([aria-disabled="true"]),
+label:has(input) {
   cursor: pointer;
 }
 
 button:disabled,
 [aria-disabled="true"] {
-  cursor: not-allowed;
+  cursor: default;
 }
 
-/* Thin 4px scrollbars everywhere — the page itself, the modal, and the
-   suggestions dropdown. Firefox has no pixel-width scrollbar control, so
-   "thin" (its narrowest keyword, ~8-11px) is the closest match there. */
+/* In the base layer, so a utility (outline-none on the search input, whose
+   field shows focus with its gradient border) can still turn it off. */
+@layer base {
+  :focus-visible {
+    outline: 2px solid var(--color-ink);
+    outline-offset: 2px;
+  }
+}
+
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgba(23, 23, 23, 0.3) transparent;
+  scrollbar-color: rgba(30, 30, 30, 0.3) transparent;
 }
-
 *::-webkit-scrollbar {
   width: 4px;
   height: 4px;
 }
-
 *::-webkit-scrollbar-track {
   background: transparent;
 }
-
 *::-webkit-scrollbar-thumb {
-  background-color: rgba(23, 23, 23, 0.3);
-}
-
-*::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(23, 23, 23, 0.5);
-}
-
-.bg-gradient-brand {
-  background-image: var(--gradient-brand);
-}
-
-.text-gradient-brand {
-  background-image: var(--gradient-brand);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
-.border-gradient-brand {
-  border-color: transparent;
-  border-image: var(--gradient-brand) 1;
-}
-
-.eyebrow {
-  text-transform: uppercase;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  background-image: var(--gradient-brand);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-.eyebrow::before {
-  content: ".";
-  color: var(--color-brand-dark);
-  -webkit-text-fill-color: var(--color-brand-dark);
+  background-color: rgba(30, 30, 30, 0.3);
 }
 
 mark.hl {
   background: var(--color-highlight);
-  color: var(--color-ink);
+  color: inherit;
   padding: 0 2px;
 }
-
 mark.hl-synonym {
   background: var(--color-highlight-synonym);
-  color: var(--color-ink);
+  color: inherit;
   padding: 0 2px;
 }
 
-/* CTA button label — "AI Search", "Reset all", "Load more" — same
-   Futura Now Extra Black stack and weight as the headings, baked in here
-   so it doesn't depend on a Tailwind font-weight utility also being
-   present on the element. */
-.cta-label {
-  font-family: var(--font-cta);
-  font-weight: 900;
-  font-size: 14px;
-  padding: 10px 24px;
-  min-height: 40px;
-}
-
-/* Same button, sized to line up with the compact filter inputs. */
-.cta-label--compact {
-  font-size: 12px;
-  padding: 6px 16px;
-  min-height: 34px;
-}
-
-@keyframes mic-pulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(224, 68, 46, 0.5);
+@layer components {
+  /* Futura caps — headings, button labels, tabs. */
+  .display {
+    font-family: var(--font-display);
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
   }
-  70% {
-    box-shadow: 0 0 0 10px rgba(224, 68, 46, 0);
+
+  .text-gradient {
+    background-image: var(--gradient-brand);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
   }
-  100% {
-    box-shadow: 0 0 0 0 rgba(224, 68, 46, 0);
+
+  .interactive {
+    transition:
+      background var(--ease),
+      border-color var(--ease),
+      box-shadow var(--ease),
+      color var(--ease),
+      outline-color var(--ease);
   }
-}
-.animate-mic-pulse {
-  animation: mic-pulse 1.1s infinite;
+  .interactive:active:not(:disabled) {
+    transform: translateY(1px);
+  }
+
+  /* ── Buttons ─────────────────────────────────────────────── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 40px;
+    /* Our Futura Now file sits low in its line box (unlike the spec's,
+       which needed padding-top) — measured, 3px at the bottom centers caps. */
+    padding: 0 20px 3px;
+    box-sizing: border-box;
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: 15px;
+    line-height: 1;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+  }
+  .btn-primary {
+    background: var(--gradient-brand);
+    color: #fff;
+  }
+  .btn-primary:hover {
+    background: var(--gradient-brand-hover);
+  }
+  .btn-secondary {
+    background: transparent;
+    color: var(--color-ink);
+    border: 1px solid var(--color-line);
+  }
+  .btn-secondary:hover {
+    border-color: var(--color-ink);
+  }
+
+  .btn-link {
+    font-size: 16px;
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+    white-space: nowrap;
+  }
+  .btn-link:hover {
+    color: var(--color-green-dark);
+    text-decoration-color: var(--color-green);
+  }
+
+  .btn-icon {
+    flex: none;
+    width: 40px;
+    height: 40px;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    border: 1px solid var(--color-line);
+    color: var(--color-ink);
+  }
+  .btn-icon:hover:not(:disabled) {
+    border-color: var(--color-ink);
+  }
+  .btn-icon:disabled {
+    border-color: var(--color-line-disabled);
+    color: var(--color-disabled);
+  }
+
+  /* The round "?" next to a title — opens the tour. */
+  .btn-help {
+    flex: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding-bottom: 4px; /* centers the "?" — measured, see .btn */
+    background: var(--color-surface);
+    color: var(--color-ink);
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: 15px;
+    line-height: 1;
+  }
+  .btn-help:hover {
+    background: var(--color-line);
+  }
+  .btn-help--active,
+  .btn-help--active:hover {
+    background: var(--gradient-brand);
+    color: #fff;
+  }
+  .btn-help--active:hover {
+    background: var(--gradient-brand-hover);
+  }
+
+  /* ── Tags ────────────────────────────────────────────────── */
+  .tag {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 24px;
+    padding: 0 10px;
+    box-sizing: border-box;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+  }
+  .tag-ai {
+    background: var(--gradient-brand);
+    color: #fff;
+  }
+  .tag-dark {
+    background: var(--color-ink);
+    color: #fff;
+  }
+  .tag-up {
+    background: var(--color-ai-tag);
+  }
+  .tag-outline {
+    background: #fff;
+    border: 1px solid var(--color-line);
+  }
+  /* "From your search" on a filter group label. */
+  .tag-query {
+    display: inline-flex;
+    align-items: center;
+    height: 20px;
+    padding: 0 8px;
+    background: var(--gradient-brand);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: none;
+    white-space: nowrap;
+  }
+  .count-tag {
+    display: inline-flex;
+    align-items: center;
+    height: 28px;
+    padding: 0 10px;
+    font-size: 15px;
+    font-weight: 600;
+    white-space: nowrap;
+    background: var(--color-surface);
+  }
+  .count-tag--ai {
+    background: var(--gradient-brand);
+    color: #fff;
+  }
+
+  /* ── Example search chips ────────────────────────────────── */
+  .chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 36px;
+    padding: 4px 12px 4px 4px;
+    box-sizing: border-box;
+    background: #fff;
+    border: 1px solid var(--color-line);
+    font-size: 15px;
+    line-height: 1.3;
+    text-align: left;
+  }
+  .chip:hover {
+    outline: 1px solid var(--color-ink);
+    outline-offset: -1px;
+  }
+  .chip__tag {
+    flex: none;
+    padding: 5px 6px;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    background: var(--color-surface);
+    color: var(--color-body);
+  }
+  .chip--active {
+    border-color: var(--color-green);
+    box-shadow: 0 0 0 1px var(--color-green);
+  }
+  .chip--active .chip__tag {
+    background: var(--gradient-brand);
+    color: #fff;
+  }
+
+  /* ── Checkbox / radio (native input hidden inside the <label>) ── */
+  .check-row {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 16px;
+  }
+  .check-row:has(input:checked) {
+    font-weight: 700;
+  }
+  .check-row > input {
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
+    margin: 0;
+  }
+  .check-box {
+    flex: none;
+    width: 18px;
+    height: 18px;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid transparent;
+    background:
+      linear-gradient(#fff, #fff) padding-box,
+      var(--gradient-brand) border-box;
+    transition: background var(--ease);
+  }
+  .check-row:hover .check-box {
+    background:
+      var(--gradient-tint) padding-box,
+      var(--gradient-brand) border-box;
+  }
+  .check-row > input:checked + .check-box {
+    background: var(--gradient-brand) border-box;
+  }
+  .check-row > input:focus-visible + .check-box {
+    outline: 2px solid var(--color-ink);
+    outline-offset: 2px;
+  }
+  .check-box--radio {
+    border-radius: 50%;
+  }
+  .check-box__mark {
+    display: none;
+  }
+  .check-row > input:checked + .check-box .check-box__mark {
+    display: block;
+  }
+
+  /* ── Dropdown trigger + menu ─────────────────────────────── */
+  .dropdown-trigger {
+    width: 100%;
+    height: 44px;
+    padding: 0 8px 0 14px;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    background: #fff;
+    border: 1px solid var(--color-line);
+    font-size: 16px;
+    text-align: left;
+  }
+  .dropdown-trigger:hover,
+  .dropdown-trigger[aria-expanded="true"] {
+    border-color: var(--color-ink);
+  }
+  .dropdown-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 20;
+    max-height: 320px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 8px 0;
+    background: #fff;
+    border: 1px solid var(--color-line);
+    box-shadow: var(--shadow-pop);
+  }
+
+  /* ── Product card ────────────────────────────────────────── */
+  .product-card {
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    display: flex;
+    gap: 12px;
+    padding: 12px;
+    text-align: left;
+    background: #fff;
+    border: 1px solid var(--color-line);
+    /* Transparent by default, or the hover outline flashes black first. */
+    outline: 2px solid transparent;
+    outline-offset: -2px;
+  }
+  .product-card:hover,
+  .product-card--paired {
+    outline-color: var(--color-green);
+  }
+  .product-card:focus-visible {
+    outline-color: var(--color-ink);
+  }
+  .product-card--ai {
+    background: var(--color-ai-surface);
+  }
+  .product-card--ai-only {
+    border-color: transparent;
+    background:
+      linear-gradient(var(--color-ai-surface), var(--color-ai-surface)) padding-box,
+      var(--gradient-brand) border-box;
+  }
 }
 
-input[type="range"] {
-  accent-color: var(--color-brand-dark);
+/* Range slider: 6px track filled in green up to the thumb (the fill is set
+   inline as a background gradient), 22px white thumb with a green ring. */
+input[type="range"].price-range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  margin: 11px 0;
+  border-radius: 999px;
+  cursor: pointer;
+}
+input[type="range"].price-range::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 999px;
+  background: transparent;
+}
+input[type="range"].price-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 22px;
+  height: 22px;
+  margin-top: -8px;
+  border-radius: 999px;
+  background: #fff;
+  border: 2px solid var(--color-green);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+input[type="range"].price-range::-moz-range-track {
+  height: 6px;
+  border-radius: 999px;
+  background: transparent;
+}
+input[type="range"].price-range::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: #fff;
+  border: 2px solid var(--color-green);
 }
 
-/* Driver.js guided tour theme ("Leobit") */
-.driver-popover.leobit-driver-theme {
-  background-color: #7fca03;
-  color: #000;
+/* ── Guided tour (driver.js) ──────────────────────────────── */
+/* The highlighted element gets a 4px green ring around the cut-out. */
+.driver-active .driver-active-element {
+  outline: 4px solid var(--color-green) !important;
+  outline-offset: 8px;
+}
+
+/* Laid out as: step counter + close on top, title, text, then Back / Next.
+   The footer is flattened (display: contents) so its children can be
+   ordered among the popover's own. */
+.driver-popover.leobit-tour {
+  box-sizing: border-box;
+  width: min(380px, calc(100vw - 32px));
+  max-width: none;
+  min-width: 0;
+  padding: 24px;
+  /* driver.js shows and hides the popover with an inline display style. */
+  display: flex !important;
+  flex-direction: column;
+  gap: 12px;
   border-radius: 0;
-  /* driver.js's own CSS defaults the popover to Helvetica Neue/Inter —
-     override once here so title/description/buttons all inherit the
-     app's own fonts instead. */
+  background: #1e1e1e;
+  color: #fff;
+  box-shadow: var(--shadow-pop);
   font-family: var(--font-sans);
 }
-
-.driver-popover.leobit-driver-theme .driver-popover-title {
-  font-family: var(--font-heading);
-  font-weight: 900;
-  font-size: 20px;
-  border-radius: 0;
-}
-
-.driver-popover.leobit-driver-theme .driver-popover-title,
-.driver-popover.leobit-driver-theme .driver-popover-description,
-.driver-popover.leobit-driver-theme .driver-popover-progress-text {
-  color: #000;
-  border-radius: 0;
-}
-
-.driver-popover.leobit-driver-theme button {
-  flex: 1;
-  text-align: center;
-  background-color: #000;
-  color: #ffffff;
-  border: 2px solid #000;
-  text-shadow: none;
-  font-size: 14px;
-  padding: 5px 8px;
-  border-radius: 0;
-}
-
-.driver-popover.leobit-driver-theme button:hover {
-  background-color: #000;
-  border-radius: 0;
-  color: #ffffff;
-}
-
-.driver-popover.leobit-driver-theme .driver-popover-footer {
-  gap: 16px;
-}
-
-.driver-popover.leobit-driver-theme .driver-popover-navigation-btns {
-  /* Not space-between: this wrapper is flex-grow:1 right next to the
-     progress text, so space-between would push "Previous" flush against
-     it. flex-end + a gap between the buttons keeps them paired instead. */
-  justify-content: flex-end;
-  gap: 8px;
-  border-radius: 0;
-}
-
-.driver-popover.leobit-driver-theme .driver-popover-navigation-btns button + button {
-  margin-left: 0;
-}
-
-.driver-popover.leobit-driver-theme .driver-popover-close-btn {
-  color: #9b9b9b;
-  background-color: transparent;
-  border: none;
-  border-radius: 0;
-}
-
-.driver-popover.leobit-driver-theme .driver-popover-close-btn:hover {
-  color: white;
-  border-radius: 0;
-  background-color: #36b802;
-}
-
-.driver-popover.leobit-driver-theme .driver-popover-arrow-side-left.driver-popover-arrow {
-  border-left-color: #7fca03;
-  border-radius: 0;
-}
-
-.driver-popover.leobit-driver-theme .driver-popover-arrow-side-right.driver-popover-arrow {
-  border-right-color: #7fca03;
-  border-radius: 0;
-}
-
-.driver-popover.leobit-driver-theme .driver-popover-arrow-side-top.driver-popover-arrow {
-  border-top-color: #7fca03;
-  border-radius: 0;
-}
-
-.driver-popover.leobit-driver-theme .driver-popover-arrow-side-bottom.driver-popover-arrow {
-  border-bottom-color: #7fca03;
-  border-radius: 0;
-}
-
-/* ── Keyword-vs-AI search comparison ─────────────────────────────── */
-
-/* Position number on a comparison result (like Algolia's "1", "2", …). */
-.rank-number {
-  min-width: 20px;
-  height: 20px;
-  padding: 0 4px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--color-surface);
-  color: var(--color-ink);
-  font-size: 10px;
-  font-weight: 700;
-}
-
-/* How an AI result moved vs. keyword search: "Found only by AI" / ↑N / ↓N / =. */
-.rank-badge {
-  height: 20px;
-  padding: 0 6px;
-  display: inline-flex;
-  align-items: center;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.02em;
-  white-space: nowrap;
-}
-.rank-badge--new {
-  background-image: var(--gradient-brand);
-  color: #fff;
-  text-transform: uppercase;
-}
-.rank-badge--up {
-  background: #e3f5d0;
-  color: var(--color-brand-dark);
-}
-.rank-badge--down,
-.rank-badge--same {
-  background: var(--color-surface);
-  color: var(--color-body);
-}
-
-/* An AI-only find: a gradient rule down its left edge. */
-.is-ai-only {
-  box-shadow: inset 3px 0 0 0 var(--color-brand);
-}
-
-/* A keyword result the AI side left out: faded, with a "Filtered out by AI" tag, so the noise in the keyword list shows at a glance. */
-.rank-badge--off {
-  background: #fff;
-  color: var(--color-body);
-  border: 1px solid var(--color-line);
-  text-transform: uppercase;
-}
-.is-dimmed :is(img, h3, .rank-number, .dim-target) {
-  opacity: 0.4;
-  transition: opacity 150ms;
-}
-.is-dimmed:is(:hover, :focus-visible) :is(img, h3, .rank-number, .dim-target) {
-  opacity: 1;
-}
-
-/* On a filter label: the value was read from the search query ("under $25", "face cream"). */
-.query-tag {
-  padding: 1px 5px;
-  background-image: var(--gradient-brand);
-  color: #fff;
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.02em;
-  text-transform: none;
-  white-space: nowrap;
-}
-
-/* Tick box in the multi-select filter dropdowns (FilterSelectComponent). */
-.filter-check {
-  flex-shrink: 0;
-  width: 13px;
-  height: 13px;
-  border: 1px solid var(--color-ink);
-  background: #fff;
-}
-.filter-check--on {
-  border-color: var(--color-brand-dark);
-  background: var(--color-brand-dark)
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 6.2l2.3 2.3 4.7-5' fill='none' stroke='%23fff' stroke-width='1.8'/%3E%3C/svg%3E")
-    center / 11px no-repeat;
-}
-
-/* Rating filter (RatingSelectComponent): a star row per option — filled stars in
-   brand green like the cards, empty ones light gray, a half star as a filled star
-   clipped to its left half over an empty one. */
-.rating-star {
-  position: relative;
-  display: inline-flex;
-  color: #c9cac6;
-}
-.rating-star--full {
-  color: var(--color-brand-dark);
-}
-.rating-star__half {
-  position: absolute;
-  inset: 0;
-  width: 50%;
-  overflow: hidden;
-  display: flex;
-  color: var(--color-brand-dark);
-}
-.rating-option--selected {
-  box-shadow: inset 3px 0 0 0 var(--color-brand-dark);
-}
-
-/* The same product, hovered in the other comparison column. */
-.is-paired {
-  outline: 2px solid var(--color-brand-dark);
-  outline-offset: -2px;
-}
-
-/* Ready-made query chips under the search bar, each tagged with the AI capability it shows off. */
-.preset-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  height: 24px;
-  padding: 0 8px 0 3px;
-  background: #fff;
-  border: 1px solid var(--color-line);
-  font-size: 12px;
-  color: var(--color-ink);
-  white-space: nowrap;
-  transition: border-color 0.15s;
-}
-.preset-chip:hover {
-  border-color: var(--color-ink);
-}
-.preset-chip__label {
-  padding: 1px 5px;
-  background: var(--color-surface);
-  font-size: 9px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--color-body);
-}
-.preset-chip--active {
-  border-color: var(--color-brand-dark);
-  box-shadow: inset 0 0 0 1px var(--color-brand-dark);
-}
-.preset-chip--active .preset-chip__label {
-  background-image: var(--gradient-brand);
-  color: #fff;
-}
-/* Chips wrap onto more rows from 640px up; on phones, one row that scrolls sideways instead of a tall stack. */
-.preset-row {
-  scrollbar-width: none;
-  justify-content: safe center;
-}
-.preset-row::-webkit-scrollbar {
+.driver-popover.leobit-tour .driver-popover-arrow {
   display: none;
 }
-.preset-chip {
-  flex-shrink: 0;
+.driver-popover.leobit-tour .driver-popover-footer {
+  display: contents !important;
 }
-
-/* The AI side of the comparison: a framed white panel with the brand
-   gradient along the top, so it reads as a separate result set from the
-   keyword side (which stays on the bare page background — deliberately not
-   muted or desaturated, it must still look like a real, working search). */
-.ai-panel {
-  background: #fff;
-  border: 1px solid rgba(36, 180, 0, 0.35);
-  border-top: 0;
-  padding: 12px 12px 10px;
-  position: relative;
-  box-shadow: 0 2px 12px rgba(36, 180, 0, 0.1);
+.driver-popover.leobit-tour .driver-popover-progress-text {
+  order: 0;
+  min-height: 40px;
+  /* driver.js sets an inline display on the counter and buttons too. */
+  display: flex !important;
+  align-items: center;
+  text-align: left;
+  padding-right: 52px;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #bcbcbc;
 }
-.ai-panel::before {
-  content: "";
-  position: absolute;
-  inset: 0 -1px auto -1px;
-  height: 3px;
-  background-image: var(--gradient-brand);
+.driver-popover.leobit-tour .driver-popover-title {
+  order: 1;
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 22px;
+  line-height: 1.2;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: #fff;
 }
-
-/* Text area of results inside the AI panel: a faint green instead of the neutral surface grey. */
-.is-ai-tint {
-  background-color: #f3f8ec;
+.driver-popover.leobit-tour .driver-popover-description {
+  order: 2;
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.5;
+  color: #e9e9e9;
 }
-
-/* Vertical rule + "VS" marker in the gap between the two comparison columns. */
-.vs-divider {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 50%;
-  width: 1px;
-  background: #dcdcdc;
-  pointer-events: none;
-}
-.vs-divider span {
-  position: absolute;
-  top: 6px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 24px;
-  height: 24px;
+.driver-popover.leobit-tour .driver-popover-navigation-btns {
+  order: 3;
   display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+.driver-popover.leobit-tour .driver-popover-navigation-btns button {
+  all: unset;
+  box-sizing: border-box;
+  height: 40px;
+  padding: 0 20px 3px;
+  display: inline-flex !important;
   align-items: center;
   justify-content: center;
-  background: var(--color-ink);
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 15px;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background var(--ease),
+    border-color var(--ease);
+}
+.driver-popover.leobit-tour .driver-popover-navigation-btns .driver-popover-prev-btn {
+  border: 1px solid #787878;
   color: #fff;
-  font-size: 10px;
-  font-weight: 800;
 }
-/* Unlayered, so it beats the row's Tailwind hover utility — keep a hover state of its own. */
-button.is-ai-tint:hover {
-  background-color: #e6f0da;
+.driver-popover.leobit-tour .driver-popover-navigation-btns .driver-popover-prev-btn:hover {
+  border-color: #fff;
 }
-/* Same top inset as the AI panel's padding + gradient rule, so both columns' rows line up. */
-.keyword-column {
-  padding-top: 12px;
+/* No Back on the first step. */
+.driver-popover.leobit-tour .driver-popover-navigation-btns .driver-popover-prev-btn.driver-popover-btn-disabled {
+  display: none !important;
+}
+.driver-popover.leobit-tour .driver-popover-navigation-btns .driver-popover-next-btn {
+  margin-left: auto;
+  background: var(--gradient-brand);
+  color: #fff;
+}
+.driver-popover.leobit-tour .driver-popover-navigation-btns .driver-popover-next-btn:hover {
+  background: var(--gradient-brand-hover);
+}
+.driver-popover.leobit-tour .driver-popover-navigation-btns button:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+.driver-popover.leobit-tour .driver-popover-close-btn {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  width: 40px;
+  height: 40px;
+  box-sizing: border-box;
+  border: 1px solid #787878;
+  border-radius: 0;
+  color: #fff;
+  font-size: 22px;
+  font-weight: 400;
+  transition: border-color var(--ease);
+}
+.driver-popover.leobit-tour .driver-popover-close-btn:hover {
+  border-color: #fff;
+  color: #fff;
+}
+
+/* Filter group label: "CATEGORY", optionally with a "From your search" tag. */
+.filter-label {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 24px;
+  font-size: 16px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }

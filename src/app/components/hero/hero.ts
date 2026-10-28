@@ -5,7 +5,6 @@ import { VoiceInput } from "../../lib/voice-input";
 import { getSuggestions, type SearchVocabulary, type Suggestion } from "../../lib/suggestions";
 import type { PresetQuery } from "../../datasets/dataset.model";
 import { normalizeQuery } from "../../lib/ai-results";
-import type { AiMode } from "../../models/product.model";
 
 @Component({
   selector: "app-hero",
@@ -15,9 +14,10 @@ import type { AiMode } from "../../models/product.model";
 })
 export class HeroComponent implements OnDestroy {
   readonly value = model.required<string>();
-  readonly isSearching = input(false);
-  readonly statusMessage = input("");
-  readonly aiMode = input<AiMode>(null);
+  /** Phone layout: the AI Search button under the field, example chips in one scrolling row. */
+  readonly phone = input(false);
+  /** The guided tour is running — the "?" shows its active state. */
+  readonly tourActive = input(false);
   readonly vocabulary = input.required<SearchVocabulary>();
   readonly presets = input<readonly PresetQuery[]>([]);
   /** The query currently shown, so its preset chip can be marked active. */
@@ -31,6 +31,14 @@ export class HeroComponent implements OnDestroy {
   readonly searchFocus = output<void>();
 
   protected readonly placeholder = ACTIVE_DATASET.searchPlaceholder;
+  protected readonly COLLAPSED_PRESETS = 5;
+  protected readonly presetsExpanded = signal(false);
+  /** The first five examples (on phones all of them, in a scrolling row) — plus the active one if it's further down. */
+  protected readonly shownPresets = computed(() => {
+    const all = this.presets();
+    if (this.phone() || this.presetsExpanded()) return all;
+    return all.filter((p, i) => i < this.COLLAPSED_PRESETS || this.isActivePreset(p));
+  });
   protected readonly voiceError = signal<string | null>(null);
   protected readonly showSuggestions = signal(false);
   protected readonly emptyQueryError = signal(false);
@@ -54,16 +62,6 @@ export class HeroComponent implements OnDestroy {
 
   protected readonly isListening = this.voice.isListening;
   protected readonly isVoiceSupported = this.voice.isSupported;
-
-  protected readonly modeLabel = computed(() => {
-    const mode = this.aiMode();
-    // Deliberately no model name here — the Azure deployment can be
-    // swapped independently (AZURE_OPENAI_DEPLOYMENT), so a hardcoded
-    // name here would just go stale.
-    if (mode === "live") return "AI: Azure OpenAI";
-    if (mode === "local") return "Local AI mode";
-    return null;
-  });
 
   protected onClear(): void {
     this.value.set("");

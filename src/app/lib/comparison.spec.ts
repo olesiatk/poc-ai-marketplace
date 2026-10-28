@@ -39,7 +39,12 @@ describe("matchReason", () => {
       directTerms: new Set(["cream"]),
       synonymTerms: new Set(["fragrance-free", "no scent", "hypoallergenic"]),
     });
-    expect(reason).toBe('matched "fragrance-free", "no scent"');
+    expect(reason).toEqual({ label: "Matched:", terms: ["fragrance-free", "no scent"] });
+  });
+
+  it("says a find by meaning is similar in meaning", () => {
+    const reason = matchReason({ score: 1, directTerms: new Set(), synonymTerms: new Set(), bySimilarity: true });
+    expect(reason).toEqual({ label: "Similar in meaning to your request", terms: [] });
   });
 
   it("returns null when there's nothing to explain", () => {

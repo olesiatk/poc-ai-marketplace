@@ -12,6 +12,7 @@ import {
   signal,
 } from "@angular/core";
 import { IconComponent } from "../icon/icon";
+import { StarsComponent } from "../stars/stars";
 import { highlightHtml } from "../../lib/search";
 import { formatDate, formatPrice, formatRating } from "../../lib/format";
 import { reportIframeHeightNow } from "../../lib/iframe-resize";
@@ -30,7 +31,7 @@ const MODAL_MIN_HEIGHT = 640;
 
 @Component({
   selector: "app-product-modal",
-  imports: [IconComponent],
+  imports: [IconComponent, StarsComponent],
   templateUrl: "./product-modal.html",
 })
 export class ProductModalComponent implements OnInit, AfterViewInit, OnDestroy {
@@ -59,6 +60,22 @@ export class ProductModalComponent implements OnInit, AfterViewInit, OnDestroy {
   );
 
   protected readonly reviewList = computed<Review[]>(() => this.reviews()[this.product().id] || []);
+  protected readonly COLLAPSED_REVIEWS = 3;
+  protected readonly allReviews = signal(false);
+  protected readonly shownReviews = computed(() =>
+    this.allReviews() ? this.reviewList() : this.reviewList().slice(0, this.COLLAPSED_REVIEWS)
+  );
+  protected readonly ratingCount = computed(() => this.product().ratingCount.toLocaleString("en-US"));
+  /** "Why AI picked this": the similar terms first, then the exact ones. */
+  protected readonly whyTerms = computed(() => {
+    const info = this.matchInfo();
+    return info ? [...info.synonymTerms, ...info.directTerms].slice(0, 3) : [];
+  });
+  /** “a”, “b” and “c” */
+  protected readonly whyText = computed(() => {
+    const quoted = this.whyTerms().map((t) => `“${t}”`);
+    return quoted.length > 1 ? `${quoted.slice(0, -1).join(", ")} and ${quoted.at(-1)}` : (quoted[0] ?? "");
+  });
 
   private stopHostListener: (() => void) | null = null;
   private readonly elementRef = inject(ElementRef<HTMLElement>);
@@ -103,17 +120,8 @@ export class ProductModalComponent implements OnInit, AfterViewInit, OnDestroy {
     if (event.target === event.currentTarget) this.close.emit();
   }
 
-  protected readonly hasMatchedTerms = computed(() => {
-    const info = this.matchInfo();
-    return !!info && (info.directTerms.size > 0 || info.synonymTerms.size > 0);
-  });
-
   protected highlight(text: string): string {
     const info = this.matchInfo();
     return highlightHtml(text, info?.directTerms ?? null, info?.synonymTerms ?? null);
-  }
-
-  protected starsArray(count: number): number[] {
-    return Array.from({ length: Math.round(count) });
   }
 }
